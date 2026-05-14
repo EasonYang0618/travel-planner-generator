@@ -1,0 +1,62 @@
+{
+  "user_stories": [
+    {
+      "id": "US1",
+      "role": "As a tourist",
+      "goal": "I want to generate a personalised day-by-day itinerary by entering destination, trip length, budget level, and interests",
+      "benefit": "so that I get a ready-to-follow plan tailored to my constraints and preferences",
+      "acceptance_criteria": [
+        "The system accepts inputs: destination (string), trip_length (integer >=1), budget (enum: low, medium, high), and interests (list of strings)",
+        "The returned itinerary contains exactly trip_length days",
+        "Each day lists at least one activity and each activity includes a name, suggested time/window, location, and a cost_estimate",
+        "Activities across the itinerary reflect the selected interests and show a budget tag consistent with the chosen budget level"
+      ]
+    },
+    {
+      "id": "US2",
+      "role": "As a website visitor",
+      "goal": "I want to enter my trip details in a web form and view a clear day-by-day itinerary in the browser",
+      "benefit": "so that I can easily read and follow the plan without using developer tools or calling APIs",
+      "acceptance_criteria": [
+        "The website provides a form with fields for destination, trip length, budget, and interests and validates inputs before submission",
+        "Submitting the form displays a human-readable itinerary page with day headings and ordered activities under each day",
+        "Each activity shown on the site includes time, location, brief description, and estimated cost",
+        "The site displays a total estimated budget summary and allows printing or saving the displayed itinerary as PDF"
+      ]
+    },
+    {
+      "id": "US3",
+      "role": "As a developer integrating the service",
+      "goal": "I want a Flask API endpoint that returns the itinerary as JSON when given trip parameters",
+      "benefit": "so that other clients (mobile apps, third-party sites) can consume generated itineraries programmatically",
+      "acceptance_criteria": [
+        "A POST /api/itinerary endpoint accepts JSON payload with keys: destination, trip_length, budget, interests",
+        "The endpoint responds with HTTP 200 and JSON containing a days array of length equal to trip_length",
+        "Each day object contains an ordered list of activity objects with fields: name, start_time (or time window), location, duration_estimate, cost_estimate, and tags",
+        "Invalid input returns a 4xx error with a helpful error message describing the validation failure"
+      ]
+    },
+    {
+      "id": "US4",
+      "role": "As a user who liked an itinerary",
+      "goal": "I want to save and share an itinerary via a unique link",
+      "benefit": "so that I can revisit it later and send it to travel companions",
+      "acceptance_criteria": [
+        "The UI provides a Save/Share action that generates a unique, shareable URL for the current itinerary",
+        "Visiting the URL loads the same itinerary in the browser or returns the same itinerary JSON via the API",
+        "Saved itineraries persist for at least 30 days and include a timestamp and the original input parameters (destination, trip_length, budget, interests)"
+      ]
+    },
+    {
+      "id": "US5",
+      "role": "As a traveller refining plans",
+      "goal": "I want to edit or swap suggested activities in the itinerary and have the system update time and cost totals",
+      "benefit": "so that the final plan matches my changing preferences and remains feasible within time and budget",
+      "acceptance_criteria": [
+        "The UI allows replacing an activity with another suggested activity or adding/removing activities for a specific day",
+        "After an edit, the itinerary recalculates and displays updated per-day and total time and cost estimates",
+        "Edits can be saved back to the saved/shareable itinerary URL or exported via the API"
+      ]
+    }
+  ]
+}

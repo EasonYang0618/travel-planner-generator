@@ -1,0 +1,28 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor Tourist
+actor "Travel Agency Assistant" as Assistant
+
+rectangle "Travel Planner Generator" {
+  usecase "Enter Preferences\n(destination, days, budget, interests)" as UC_Enter
+  usecase "Generate Itinerary\n(day-by-day, budget-aware)" as UC_Generate
+  usecase "View Website\n(submit form, view/print results)" as UC_Web
+  usecase "Request Destination Image\n(fetch/display images)" as UC_Image
+  usecase "Access API\n(POST /api/itineraries, GET /api/itineraries/{id})" as UC_API
+}
+
+Tourist --> UC_Web
+Tourist --> UC_Enter
+Tourist --> UC_API
+Tourist --> UC_Image
+
+Assistant --> UC_API
+Assistant --> UC_Generate
+
+UC_Enter --> UC_Generate : <<includes>>
+UC_API --> UC_Generate : <<includes>>
+UC_Web --> UC_Image : <<includes>>
+
+@enduml
