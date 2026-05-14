@@ -6,23 +6,29 @@ actor Tourist
 actor "Travel Agency Assistant" as Assistant
 
 rectangle "Travel Planner Generator" {
-  usecase "Enter Preferences\n(destination, days, budget, interests)" as UC_Enter
-  usecase "Generate Itinerary\n(day-by-day, budget-aware)" as UC_Generate
-  usecase "View Website\n(submit form, view/print results)" as UC_Web
-  usecase "Request Destination Image\n(fetch/display images)" as UC_Image
-  usecase "Access API\n(POST /api/itineraries, GET /api/itineraries/{id})" as UC_API
+  usecase "Enter Preferences\n(Destination, Days, Budget, Interests)" as UC_Enter
+  usecase "Generate Itinerary\n(Day-by-day planning)" as UC_Generate
+  usecase "View Website\n(User-facing UI, printable)" as UC_View
+  usecase "Request Destination Image\n(Thumbnail / Photo)" as UC_Image
+  usecase "Access API\nPOST /api/itinerary" as UC_API
 }
 
-Tourist --> UC_Web
+' Actor relationships
+Tourist --> UC_View
 Tourist --> UC_Enter
-Tourist --> UC_API
 Tourist --> UC_Image
+Tourist --> UC_API
 
-Assistant --> UC_API
+Assistant --> UC_View
+Assistant --> UC_Enter
 Assistant --> UC_Generate
+Assistant --> UC_API
 
-UC_Enter --> UC_Generate : <<includes>>
-UC_API --> UC_Generate : <<includes>>
-UC_Web --> UC_Image : <<includes>>
+' Use case relationships
+UC_Generate .> UC_Enter : <<include>>
+UC_View .> UC_Generate : <<include>>
+UC_API .> UC_Generate : <<include>>
+UC_View .> UC_Image : <<extend>>
+UC_API .> UC_Image : <<extend>>
 
 @enduml

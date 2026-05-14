@@ -1,153 +1,184 @@
-# Requirements for Travel Itinerary Web App (Flask API + Website)
+# Requirements
 
-Brief: A small travel agency needs a web application that helps tourists generate personalised city travel itineraries. Users provide destination, trip length, budget level, and interests; the system returns a clear day-by-day itinerary. The app will expose a Flask JSON API and a simple responsive website that consumes the API.
+This document lists the functional and non-functional requirements for a coursework-scale Flask web application and API that generates personalised city travel itineraries. Requirements are prioritised and include acceptance criteria where useful. The scope is suitable for a student project: a Flask backend, a simple frontend (Jinja2 + HTML/CSS/JS or Bootstrap), and a small local dataset (or mocked external API).
 
 ---
 
 ## Functional requirements
 
-Each functional requirement includes a short description, priority (Must / Should / Could), and one or more acceptance criteria that are concrete and testable.
+Each requirement has an ID, a short description, rationale, and acceptance criteria.
 
-FR1 — User input form / API endpoint to request an itinerary  
-- Priority: Must  
-- Description: The system must accept the following input: destination (city name), trip length (integer days, 1–14), budget level (e.g., low / medium / high), and a list of interests (e.g., museums, food, parks, nightlife).  
-- Acceptance criteria:
-  - Website: a form exists where a user can enter the fields above and submit. All fields validated client-side.
-  - API: POST /api/itineraries accepts JSON with keys: destination, days, budget, interests. Returns 400 on invalid input.
+FR-1: Landing page and instructions
+- Description: Provide a landing/home page that explains the service and shows an input form or a prominent link to the itinerary generator.
+- Rationale: Help users understand and access the tool quickly.
+- Acceptance criteria: Visiting `/` displays brief instructions and a link/button to the generator.
 
-FR2 — Generate a day-by-day itinerary  
-- Priority: Must  
-- Description: Produce a structured itinerary covering each day of the trip. Each day should contain 1–5 scheduled items (e.g., attractions, meals, transit notes) with approximate times or time-of-day tags (morning/afternoon/evening). Items are chosen to match interests and budget.  
-- Acceptance criteria:
-  - API response body includes an "itinerary" array with `days` equal to requested trip length.
-  - Each day object contains at least one item with fields: title, category, estimated_duration (minutes), time_of_day, short_description.
-  - Items filtered by the interests requested: at least 60% of items match the user's interests (or a meaningful fallback if few POIs available).
+FR-2: Trip input form (website)
+- Description: A web form where users enter:
+  - Destination city (text)
+  - Trip length (number of days, integer >=1 and <=14)
+  - Budget level (e.g., low / medium / high)
+  - Interests (multi-select: e.g., culture, food, outdoor, shopping, nightlife, museums)
+  - Optional: start date (date)
+- Rationale: Collect parameters needed to create an itinerary.
+- Acceptance criteria: Form validates required fields client- and server-side and posts to the backend.
 
-FR3 — Budget-aware recommendations  
-- Priority: Must  
-- Description: The itinerary should consider the selected budget level when choosing POIs/activities (e.g., more free/low-cost items for "low" budget).  
-- Acceptance criteria:
-  - Generated items include a `cost_level` tag (free / low / medium / high).
-  - For "low" budget requests, at least 70% of items are free/low cost.
+FR-3: RESTful API endpoint for itinerary generation
+- Description: POST /api/itinerary accepts JSON payload with the same fields as the web form and returns a generated itinerary in JSON.
+- Rationale: Separate API layer for programmatic access and to enable the website to consume the service.
+- Acceptance criteria: Valid request returns HTTP 200 JSON with clear day-by-day structure; invalid request returns 4xx with error message.
 
-FR4 — Basic routing / daily travel awareness (approx.)  
-- Priority: Should  
-- Description: The system should avoid scheduling widely-dispersed activities back-to-back on the same day where possible (use simple clustering by neighbourhood or POI type). Exact routing/navigation not required.  
-- Acceptance criteria:
-  - If two items are from different neighbourhoods, the generator prefers inserting a different item in-between or scheduling them on different days when possible.
-  - Unit tests demonstrating the clustering heuristic applied to a sample dataset.
+FR-4: Itinerary generation engine (core)
+- Description: Generate a day-by-day itinerary based on inputs:
+  - Distribute points-of-interest (POIs) across days according to trip length.
+  - Match POIs to selected interests and budget level.
+  - Suggest timings (morning/afternoon/evening) and approximate durations for each activity.
+- Rationale: Provide meaningful, personalised itineraries.
+- Acceptance criteria: Generated itinerary contains an entry for each day from 1..n, each day lists 2–6 activities, and activities correspond to selected interests.
 
-FR5 — Persist and retrieve itineraries  
-- Priority: Should  
-- Description: Allow generated itineraries to be saved and retrieved by ID (persistent storage using SQLite or similar).  
-- Acceptance criteria:
-  - POST /api/itineraries returns an itinerary id when the "save" option is selected or by default.
-  - GET /api/itineraries/{id} returns the saved itinerary (404 if not found).
-  - Data persists across server restarts in a coursework environment.
+FR-5: POI data source
+- Description: Use a local dataset (JSON/SQLite) of sample POIs for several cities. Each POI includes name, category/tags, estimated cost level, opening hours (optional), brief description, and coordinates (optional).
+- Rationale: Keep external dependencies minimal for coursework.
+- Acceptance criteria: Engine uses the dataset to select POIs; dataset is packaged with the project or seeded on setup.
 
-FR6 — Website result view and printable view  
-- Priority: Must  
-- Description: The website must display the generated itinerary day-by-day and provide a printer-friendly version.  
-- Acceptance criteria:
-  - Result page lists days and items with times/descriptions.
-  - A "Print / Save as PDF" button presents a condensed, printable layout.
+FR-6: Budget-aware suggestions
+- Description: Map the budget level to appropriate POIs (e.g., low -> more free/cheap activities; high -> include paid experiences).
+- Rationale: Keep recommendations realistic and aligned with user constraints.
+- Acceptance criteria: ≥80% of suggested POIs match the budget tier mapping rules.
 
-FR7 — API documentation and sample requests  
-- Priority: Should  
-- Description: Provide basic API documentation (README or /api/docs) with example requests and responses.  
-- Acceptance criteria:
-  - README or an HTML page lists endpoints, required request fields, and example JSON responses.
+FR-7: Interest matching and prioritisation
+- Description: If user selects multiple interests, ensure suggestions reflect a balanced mix or allow a primary interest to receive priority.
+- Rationale: Personalisation.
+- Acceptance criteria: For single-interest requests, ≥70% of activities match that interest; for multi-interest, activities cover at least two selected interests.
 
-FR8 — Input validation and error handling  
-- Priority: Must  
-- Description: Validate inputs server-side and return meaningful error messages. Handle common errors and third-party failures gracefully.  
-- Acceptance criteria:
-  - API returns 400 with JSON error details for missing/invalid fields.
-  - If an external POI service fails, API returns 503 with a helpful message and the website shows a friendly error page.
+FR-8: Output formats (website + API)
+- Description: Display the itinerary on the website as a readable day-by-day plan with clear headings, times, brief descriptions, and an estimated daily cost summary. The API returns a structured JSON representation of the same content. Optionally support JSON export and a simple PDF or printable view.
+- Rationale: Usable UI and machine-readable output.
+- Acceptance criteria: Website view shows day headers, activities, times, and costs; API returns JSON keys: days[], activities[], times, cost_estimate.
 
-FR9 — Optional: User feedback for itinerary adjustments  
-- Priority: Could  
-- Description: Allow users to mark items as "remove" or "replace" and regenerate the day's plan.  
-- Acceptance criteria:
-  - Website provides buttons to remove/replace an item; invoking them calls an API that returns an updated itinerary fragment.
+FR-9: Download or export itinerary
+- Description (optional / nice-to-have): Allow users to download itinerary as JSON (required) and optionally as a printable HTML/PDF.
+- Rationale: Users often want to save or print itineraries.
+- Acceptance criteria: Button downloads JSON; printable view is accessible via “Print” or “Save as PDF”.
 
-FR10 — Admin / data seeding interface (development feature)  
-- Priority: Could  
-- Description: Allow the developer to seed local POI/sample data or switch between a local sample dataset and a third-party API for POIs.  
-- Acceptance criteria:
-  - A config or simple admin route allows toggling data source for local testing.
+FR-10: Error handling and user feedback
+- Description: Provide clear error messages for invalid inputs, missing data for a destination, or server errors.
+- Rationale: Improve usability and debugging.
+- Acceptance criteria: Invalid form shows inline errors; API returns JSON error with message and HTTP status code.
 
-FR11 — Health-check endpoint  
-- Priority: Should  
-- Description: Expose a simple GET /api/health that returns status 200 and basic service info.  
-- Acceptance criteria: Endpoint returns 200 and JSON {status: "ok", version: "x.y"}.
+FR-11: Simple persistence of saved itineraries (optional)
+- Description: Allow users to save generated itineraries to a local database (SQLite) under a generated identifier (no full user account required). Provide a page to list saved itineraries and view them.
+- Rationale: Useful feature without heavy auth complexity.
+- Acceptance criteria: Saved itinerary is retrievable by ID and listed on a "Saved itineraries" page.
 
-Data model notes (for implementation):
-- Itinerary: id, destination, start_date (optional), days: [Day].
-- Day: day_number, date (optional), items: [Item].
-- Item: id, title, category, cost_level, estimated_duration, time_of_day, description, source (local/third-party), location/neighbourhood (optional).
+FR-12: Basic admin/maintenance for dataset (optional)
+- Description: Provide a simple script or protected route to import/refresh the local POI dataset from a JSON file.
+- Rationale: Make it easy to update sample data for coursework demonstration.
+- Acceptance criteria: Dataset can be reseeded via a script or admin-only endpoint.
+
+FR-13: Frontend usability
+- Description: Use responsive layout (desktop + mobile), clear typography, and simple navigation. Use client-side form validation and helpful placeholders.
+- Rationale: Acceptable UX for coursework.
+- Acceptance criteria: Pages are viewable on narrow screens; required fields flagged before submit.
+
+FR-14: Basic logging
+- Description: Log key events (requests to /api/itinerary, errors) to console or a file for debugging.
+- Rationale: Aid development and assessment.
+- Acceptance criteria: Server logs include timestamped entries for requests and exceptions.
+
+FR-15: Automated tests for core logic
+- Description: Provide unit tests for itinerary generation logic (e.g., distribution of POIs across days, interest matching).
+- Rationale: Demonstrate correctness and support maintainability.
+- Acceptance criteria: Test suite runs locally with tests for the main generation functions.
 
 ---
 
 ## Non-functional requirements
 
-NFR1 — Performance (interactive generation)  
-- Requirement: Generating an itinerary for a standard request (1–7 days) should complete within 5 seconds on a typical student VM or cloud free tier.  
-- Measurement: 95th percentile response time <= 5s under low load (single-user tests).
+NFR-1: Technology stack and constraints
+- Requirement: Use Flask (Python) for the backend; Jinja2 templates and minimal JS (or Bootstrap) for the frontend; local SQLite or JSON file for data.
+- Rationale: Keep scope manageable for coursework.
+- Success criteria: Project runs locally with instructions; no paid external services required.
 
-NFR2 — Availability for coursework deployment  
-- Requirement: The application must be runnable locally and deployable to a simple platform (e.g., Heroku/Render) with documented steps.  
-- Measurement: README includes start and deployment instructions; app starts without extra proprietary services.
+NFR-2: Performance
+- Requirement: Typical itinerary generation request should complete within 3 seconds on a modest development machine.
+- Rationale: Acceptable responsiveness for interactive use.
+- Measurement: Average response time under light load measured during demonstration.
 
-NFR3 — Security basics  
-- Requirement: Use HTTPS in production deployment, validate and sanitize inputs, protect against basic web vulnerabilities (XSS, CSRF, SQL injection). Secrets (API keys) must not be committed.  
-- Measurement: No plaintext secrets in repo; forms protected against CSRF; prepared statements/ORM for DB access.
+NFR-3: Scalability (coursework-level)
+- Requirement: Design code modularly to allow future replacement of local dataset with an external API or larger DB without major rewrites.
+- Rationale: Good engineering practice.
+- Success criteria: Data access isolated in a repository/service layer.
 
-NFR4 — Privacy / data minimisation  
-- Requirement: Do not collect or store more personal data than necessary. If user accounts are omitted, do not store identifiable personal info. Provide a short privacy note in README.  
-- Measurement: Database schema and sample data do not include unnecessary personal fields.
+NFR-4: Reliability and availability
+- Requirement: Application should start reliably and handle missing data gracefully (return informative errors rather than crashing).
+- Rationale: Robust demo behavior.
+- Success criteria: Known errors handled and logged; app does not crash on malformed requests.
 
-NFR5 — Usability & accessibility  
-- Requirement: Website should be responsive (works on mobile and desktop) and meet basic accessibility practices (semantic HTML, alt text, keyboard navigation).  
-- Measurement: Manual checklist confirming responsive layout and ability to navigate and submit forms via keyboard; contrast > 4.5:1 for primary text.
+NFR-5: Security (basic)
+- Requirement: Prevent common web vulnerabilities relevant to coursework:
+  - Validate and sanitize user inputs server-side.
+  - Use Flask CSRF protection for forms.
+  - Escape output in templates to avoid XSS.
+  - Avoid storing secrets in source; use configuration/local env vars.
+- Rationale: Minimal security hygiene.
+- Success criteria: No obvious XSS/CSRF issues in demo; inputs validated.
 
-NFR6 — Maintainability and code quality  
-- Requirement: Use modular Flask app structure, separate concerns (routes, services, data access, templates), and include inline documentation. Keep complexity suitable for coursework.  
-- Measurement: Code has a README, docstrings for main modules, and modules not exceeding reasonable size.
+NFR-6: Privacy and data handling
+- Requirement: If saving itineraries, store only the itinerary data and minimal metadata (timestamp). Do not collect or store sensitive personal data.
+- Rationale: Ethical handling of user data in coursework.
+- Success criteria: Database schema contains no PII fields by default.
 
-NFR7 — Testability  
-- Requirement: Provide unit tests for core itinerary generation logic and API endpoint integration tests.  
-- Measurement: At least a small test suite (e.g., pytest) exercising generation for different interests and invalid inputs.
+NFR-7: Maintainability and code quality
+- Requirement: Code should be modular, documented, and follow PEP8 where reasonable. Provide a README with setup and run instructions.
+- Rationale: Facilitate grading and future changes.
+- Success criteria: README explains how to run the app and tests; code organized into routes, services, models, templates.
 
-NFR8 — Error logging and observability  
-- Requirement: Log server errors and key events (itinerary creation, save operations) to console/file with timestamps. Include enough context to reproduce issues.  
-- Measurement: Logs include error stack traces in development and structured messages for key actions.
+NFR-8: Testability
+- Requirement: Provide automated tests (unit tests for generation logic, basic integration tests for API endpoints).
+- Rationale: Demonstrate correctness and enable regression checking.
+- Success criteria: Tests runnable with a single command (e.g., pytest) and pass.
 
-NFR9 — Extensibility  
-- Requirement: Design the POI/data access layer so it can be swapped between a local sample dataset and external APIs with minimal changes.  
-- Measurement: Data access behind an interface/class with two implementations (sample vs. external).
+NFR-9: Portability and deployment
+- Requirement: The app must run on a local development machine and be easily containerisable (Dockerfile optional). Use only commonly available Python packages.
+- Rationale: Simplifies demonstration and assessment.
+- Success criteria: Setup via pip/venv or Docker documented in README.
 
-NFR10 — Resource constraints / dependency management  
-- Requirement: Keep third-party dependencies minimal and pinned (requirements.txt). The app should run within modest resource limits typical for coursework (~512MB RAM).  
-- Measurement: requirements.txt provided; memory usage reasonable in simple tests.
+NFR-10: Usability and accessibility
+- Requirement: UI should be readable, keyboard-navigable, and conform to basic accessibility practices (semantic HTML, alt text for images if used).
+- Rationale: Improve inclusivity and user experience.
+- Success criteria: Pages usable without heavy scrolling; form fields labelled.
 
-NFR11 — Internationalisation / localisation (basic)  
-- Requirement: Support at least English content. Clear separation of display strings so adding translations later is straightforward.  
-- Measurement: Strings are not hard-coded into templates or logic; a single file or approach for messages.
+NFR-11: Documentation
+- Requirement: Provide README describing system architecture, how the itinerary is generated (brief algorithm description), API specification for endpoints and sample requests/responses, and instructions to run tests.
+- Rationale: Assist reviewers and instructors.
+- Success criteria: README includes sample curl/postman request and example JSON output.
 
-NFR12 — License and third-party data compliance  
-- Requirement: If using external POI datasets or APIs, follow their terms of use and note sources in README. If including sample data, ensure licensing permits use in coursework.  
-- Measurement: README lists any external data sources and their license or API terms.
+NFR-12: Logging and observability
+- Requirement: Provide server-side logs for requests and errors; log level configurable via environment.
+- Rationale: Easier debugging during coursework demonstration.
+- Success criteria: Logs are produced on startup and on errors.
+
+NFR-13: Acceptable accuracy for recommendations
+- Requirement: The itinerary generator may be heuristic-based; results should be sensible (no gross mismatches like suggesting “ski resort” for a summer beach city unless explicitly tagged).
+- Rationale: Practical realism for demo.
+- Success criteria: Manual inspection of 5 sample itineraries shows recommendations are relevant.
 
 ---
 
-## Constraints and assumptions (coursework scope)
+## Prioritisation (suggested for coursework)
 
-- The itinerary generator may use a simple rule-based or heuristic algorithm and a small local POI dataset for offline use. Integrating a commercial routing or optimisation engine is not required.  
-- User authentication and payment processing are out of scope, unless implemented as an optional stretch goal.  
-- The app must be implemented in Python using Flask for the API and server-side rendering or a small client-side script for the website.  
-- Persistent storage may be SQLite to keep deployment simple.
+- Must-have (MVP): FR-1, FR-2, FR-3, FR-4, FR-5, FR-6, FR-8, FR-10, FR-13, NFR-1..NFR-4, NFR-5..NFR-8, NFR-11.
+- Nice-to-have: FR-9, FR-11, FR-12, FR-14, NFR-9, NFR-10, NFR-12, NFR-13.
 
 ---
 
-If you want, I can convert these into a user-stories backlog, or produce concise acceptance-test cases for each requirement suitable for coursework marking.
+## Example minimal acceptance test cases
+
+1. POST /api/itinerary with {destination: "Paris", days: 3, budget: "medium", interests: ["museums","food"]} returns HTTP 200 and JSON with 3 days, each with activities matching “museums” or “food”.
+2. Submitting the web form for the same input shows a readable day-by-day itinerary page within 3 seconds.
+3. Invalid input (days = 0) shows validation error (400 + message for API; inline UI error for web).
+
+---
+
+This set of requirements aims to keep the project achievable within a coursework timeline while demonstrating full-stack design, a REST API, data-driven recommendation logic, and attention to quality attributes.
