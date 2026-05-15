@@ -57,6 +57,8 @@ Task1/travel_planner_generator.ipynb
 
 The notebook generates the Task2 artefacts, including documentation, UML diagrams, Flask API code, website code, tests, CI workflow configuration, and Docker deployment files.
 
+The recommended layout is to run the notebook from `Task1`. If the notebook is run from a standalone folder, it will use the current working directory as the project root and create a `Task2` folder there.
+
 ## Run Tests
 
 From the project root:
