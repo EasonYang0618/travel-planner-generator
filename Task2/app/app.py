@@ -140,10 +140,6 @@ def health():
 def index():
     return send_from_directory(".", "index.html")
 
-@app.route("/generated_destination.png", methods=["GET"])
-def generated_destination_image():
-    return send_from_directory(".", "generated_destination.png")
-
 @app.route("/generated_images/<path:filename>", methods=["GET"])
 def generated_image_file(filename):
     return send_from_directory(os.path.join(app.root_path, "generated_images"), filename)
