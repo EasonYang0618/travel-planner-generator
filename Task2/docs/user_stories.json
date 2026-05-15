@@ -3,48 +3,66 @@
     {
       "id": "US1",
       "role": "As a traveler",
-      "goal": "I want to enter a destination, trip length, budget level, and interests so that the system generates a personalised day-by-day travel itinerary.",
-      "benefit": "So I get a ready-to-follow plan tailored to my constraints and preferences without manual research.",
+      "goal": "I want to enter a destination, trip length, budget level, and interests so that the system can generate a personalised day-by-day travel itinerary",
+      "benefit": "So I receive a ready-to-follow plan tailored to my constraints and preferences",
       "acceptance_criteria": [
-        "A web form and API accept destination, trip_length (positive integer), budget_level (e.g., low/medium/high), and interests (list of strings).",
-        "Inputs are validated and user receives clear validation messages for missing/invalid fields.",
-        "The returned itinerary contains a 'days' array with length equal to trip_length and each day contains at least: list of activities, suggested times, estimated durations, and per-activity cost estimates.",
-        "The itinerary recommendations reflect declared interests (majority of activities match interests) and budget_level (estimated total cost falls within the defined range for that level)."
+        "A form or API accepts destination, start date or start-day, trip length (days), budget level (low/medium/high) and a list of interests",
+        "Input is validated and clear error messages are returned for missing/invalid fields",
+        "The system returns a day-by-day itinerary where each day lists 3–6 activities or visits",
+        "Returned itinerary respects trip length, incorporates stated interests, and filters suggestions consistent with the budget level",
+        "Itinerary includes estimated times or time windows for each activity and a short description for each item"
       ]
     },
     {
       "id": "US2",
       "role": "As a traveler",
-      "goal": "I want to view the generated itinerary on the website in a clear day-by-day layout so I can follow it during my trip.",
-      "benefit": "So I can easily understand what to do each day, when, and how to get there.",
+      "goal": "I want to view the generated itinerary on the website with map and details so I can easily follow and visualise my trip",
+      "benefit": "So I can plan logistics and see locations spatially without leaving the app",
       "acceptance_criteria": [
-        "The website displays the itinerary with separate sections for each day labeled by day number or date.",
-        "Each activity entry shows name, short description, suggested start time or time window, estimated duration, and a transport suggestion or travel time to next activity.",
-        "There is a printable view or export (e.g., print-friendly HTML or PDF) accessible from the UI that formats the day-by-day itinerary for offline use.",
-        "Links to maps or directions are provided for activities where applicable."
+        "Website displays the itinerary in a clear day-by-day layout with activity names, times, descriptions and estimated durations",
+        "Each activity links to a map marker and clicking an activity highlights its location on the map",
+        "Map shows all day activities with markers and supports pan/zoom; hovering a marker shows a short activity summary",
+        "The page is responsive and usable on mobile and desktop viewports",
+        "User can export or print the itinerary as a simple printable view (PDF or print stylesheet)"
       ]
     },
     {
       "id": "US3",
-      "role": "As a developer/integrator",
-      "goal": "I want a Flask API endpoint that accepts itinerary requests and returns structured JSON so other services and the website can integrate with the itinerary generator.",
-      "benefit": "So the itinerary functionality can be reused programmatically and the website can use the same backend logic.",
+      "role": "As a user",
+      "goal": "I want to save, name, and later edit my generated itineraries so I can refine plans and reuse them",
+      "benefit": "So I can keep customised plans and iterate on them without re-entering all preferences",
       "acceptance_criteria": [
-        "A POST /api/itinerary endpoint accepts JSON with keys: destination, trip_length, budget_level, interests and returns HTTP 200 with a JSON payload containing a days array and activity details.",
-        "The API returns appropriate HTTP error codes and JSON error messages for invalid input (e.g., 400 for missing/invalid fields).",
-        "Responses are deterministic for the same inputs (or document when randomness is applied) and include metadata such as estimated total cost and generation timestamp.",
-        "CORS is configured so the website frontend can call the API in a browser."
+        "Authenticated users can save an itinerary with a title and optional notes",
+        "Saved itineraries are listed in a user dashboard sorted by creation or modified date",
+        "Users can open a saved itinerary, make edits (reorder, add/remove activities, change times) and save updates",
+        "Changes to a saved itinerary are versioned or provide an option to overwrite vs. create new copy",
+        "Unauthenticated users receive a prompt to sign up or are offered a temporary local save option (e.g., download JSON)"
       ]
     },
     {
       "id": "US4",
-      "role": "As a traveler",
-      "goal": "I want to refine or regenerate my itinerary by adjusting inputs (e.g., change interests or trip length) and compare versions so I can choose the best plan.",
-      "benefit": "So I can iteratively improve the itinerary until it fits my needs.",
+      "role": "As an API consumer (developer)",
+      "goal": "I want a Flask API endpoint that accepts trip parameters and returns a machine-readable itinerary so I can integrate the service with other apps",
+      "benefit": "So third-party apps or scripts can programmatically generate and retrieve itineraries",
       "acceptance_criteria": [
-        "The UI provides an 'Edit' or 'Refine' action that pre-fills the original inputs and allows changes.",
-        "Submitting refinements calls the API and replaces the displayed itinerary with the new one while preserving access to the previous version in the session.",
-        "The user can view at least the current and previous itinerary versions and can revert to a previous version within the same session."
+        "A documented POST endpoint (e.g., /api/itineraries) accepts JSON input with destination, trip length, budget, interests and returns JSON",
+        "Successful responses use HTTP 200 and include a structured itinerary: days array, each with activities (name, description, start_time, duration, coordinates)",
+        "Validation errors return appropriate 4xx status codes with machine-readable error messages",
+        "API returns consistent schema and content-type application/json and supports pagination or size limits for large responses",
+        "API responses are generated deterministically for the same input (or document variability) and include a request_id for tracing"
+      ]
+    },
+    {
+      "id": "US5",
+      "role": "As an agency admin",
+      "goal": "I want to manage the database of points of interest and settings for activity selection so recommendations stay accurate and relevant",
+      "benefit": "So tourists get up-to-date, high-quality suggestions aligned with our offerings and constraints",
+      "acceptance_criteria": [
+        "Admin interface or secured API supports CRUD operations on points of interest with fields: name, category, description, coordinates, opening hours, price range, tags",
+        "Changes to POIs are reflected in newly generated itineraries within a defined propagation window (e.g., immediately or documented delay)",
+        "Admin can configure prioritisation rules (e.g., weight by popularity, proximity, or budget compatibility) that affect suggestion ordering",
+        "All admin actions require authentication and are audited (record user, timestamp, change summary)",
+        "POI entries validate required fields and prevent duplicate coordinates+name entries"
       ]
     }
   ]

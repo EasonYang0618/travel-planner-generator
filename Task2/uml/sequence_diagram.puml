@@ -4,22 +4,21 @@ participant Website
 participant "Flask API" as FlaskAPI
 participant APIFree
 
-User -> Website: Submit travel preferences\n(destination, dates, interests)
+User -> Website: Submit travel preferences (destination, dates, interests)
 activate Website
 
-Website -> FlaskAPI: POST /generate\n(prefs JSON)
+Website -> FlaskAPI: POST /generate (preferences)
 activate FlaskAPI
 
-FlaskAPI -> APIFree: POST /create-itinerary\n(prefs)
+FlaskAPI -> APIFree: Request itinerary + image (preferences)
 activate APIFree
 
-APIFree --> FlaskAPI: 200 OK\n(itinerary data + image URL/base64)
+APIFree --> FlaskAPI: 200 OK (itinerary JSON, image URL/base64)
 deactivate APIFree
 
-FlaskAPI --> Website: 200 OK\n(itinerary JSON + image)
+FlaskAPI --> Website: 200 OK (itinerary, image)
 deactivate FlaskAPI
 
-Website -> Website: Render itinerary and image
-Website --> User: Display generated itinerary and image
+Website -> User: Display generated itinerary and image
 deactivate Website
 @enduml

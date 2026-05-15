@@ -11,6 +11,7 @@ The selected business problem is a travel planner website. Users enter a destina
 ```text
 Task1/
   travel_planner_generator.ipynb
+  ai_in_se_cw.yml
 
 Task2/
   app/
@@ -36,9 +37,15 @@ flask-cors
 pytest
 ```
 
-An APIFree API key should be provided as `APIFREE_API_KEY` in a `.env` file or as an environment variable. Internet access is required for APIFree generation and PlantUML rendering.
+The coursework conda environment file is included at:
 
-Example `.env` values:
+```text
+Task1/ai_in_se_cw.yml
+```
+
+An APIFree API key should be provided as `APIFREE_API_KEY` in the submitted `.env` file or as an environment variable. Internet access is required for APIFree generation and PlantUML rendering.
+
+The submitted `.env` file should use this format:
 
 ```text
 APIFREE_API_KEY=your_key_here
@@ -69,12 +76,20 @@ python -m pytest Task2/tests -q
 
 ## Docker Deployment
 
-From `Task2/app`:
+Open a terminal from the project root, then move into the generated Flask app folder:
+
+```powershell
+cd "Task2/app"
+```
+
+Build and run the Docker image:
 
 ```powershell
 docker build -t travel-planner-generator .
 docker run --rm -p 5000:5000 --env-file ../../.env travel-planner-generator
 ```
+
+The `--env-file ../../.env` path assumes the `.env` file is in the project root, two levels above `Task2/app`.
 
 Then open:
 
