@@ -1,158 +1,80 @@
+import requests
+import re
+import base64
+import time
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import os, logging, random, datetime, time, base64, re
-import requests
+import os, datetime, random
 
 app = Flask(__name__)
 CORS(app)
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
-logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s %(levelname)s %(message)s")
-logger = logging.getLogger(__name__)
 
-# Simple local POI dataset (generic templates; destination inserted at runtime)
-POI_POOL = {
-    "culture": [
-        {"name": "Historic Center Walk", "desc": "Explore heritage streets and landmarks.", "cost": "low"},
-        {"name": "Local Cultural Center", "desc": "Exhibits on local traditions and history.", "cost": "low"},
-        {"name": "Architectural Highlights Tour", "desc": "Guided look at notable buildings.", "cost": "medium"},
-        {"name": "Cultural Performance", "desc": "Evening show of music/dance.", "cost": "medium"},
-    ],
-    "food": [
-        {"name": "Street Food Stroll", "desc": "Taste local specialties at market stalls.", "cost": "low"},
-        {"name": "Popular Bistro", "desc": "Casual meal showcasing regional dishes.", "cost": "medium"},
-        {"name": "Chef's Tasting Menu", "desc": "Multi-course dining experience.", "cost": "high"},
-        {"name": "Food Market Visit", "desc": "Shop fresh ingredients and snacks.", "cost": "low"},
-    ],
-    "outdoor": [
-        {"name": "Scenic Park Hike", "desc": "Walk or light hike through green spaces.", "cost": "low"},
-        {"name": "Waterfront Promenade", "desc": "Relax by the water and enjoy views.", "cost": "low"},
-        {"name": "Guided Nature Tour", "desc": "Learn about local flora/fauna.", "cost": "medium"},
-        {"name": "Adventure Activity", "desc": "High-energy outdoor experience.", "cost": "high"},
-    ],
-    "shopping": [
-        {"name": "Local Artisan Market", "desc": "Buy handcrafted souvenirs.", "cost": "low"},
-        {"name": "Boutique Shopping Street", "desc": "Independent designers and shops.", "cost": "medium"},
-        {"name": "Shopping Mall", "desc": "Modern retail with varied options.", "cost": "medium"},
-    ],
-    "nightlife": [
-        {"name": "Rooftop Bar", "desc": "Drinks with a city view.", "cost": "high"},
-        {"name": "Live Music Venue", "desc": "Local bands and performances.", "cost": "medium"},
-        {"name": "Casual Pub Crawl", "desc": "Visit a few popular local pubs.", "cost": "low"},
-    ],
-    "museums": [
-        {"name": "Main City Museum", "desc": "Core artworks and exhibits.", "cost": "medium"},
-        {"name": "Specialty Museum", "desc": "Focused collection (science, maritime, etc.).", "cost": "medium"},
-        {"name": "Small Gallery", "desc": "Emerging artists and rotating shows.", "cost": "low"},
-    ],
+INTEREST_MAP = {
+    'nature': 'outdoor', 'outdoors': 'outdoor', 'outdoor': 'outdoor',
+    'museum': 'museums', 'museums': 'museums',
+    'history': 'culture', 'culture': 'culture',
+    'dining': 'food', 'food': 'food', 'culinary': 'food'
 }
+DEFAULT_INTERESTS = ['culture', 'food', 'outdoor']
 
-COST_RANK = {"low": 1, "medium": 2, "high": 3}
-COST_ESTIMATE = {"low": 10, "medium": 40, "high": 120}
-INTEREST_ALIASES = {
-    "nature": "outdoor",
-    "outdoors": "outdoor",
-    "museum": "museums",
-    "history": "culture",
-    "dining": "food",
-}
-
-def normalize_interests(interests):
-    if not isinstance(interests, list):
-        interests = [interests]
-    normalized = []
-    for item in interests:
-        key = str(item).strip().lower()
-        key = INTEREST_ALIASES.get(key, key)
-        if key in POI_POOL and key not in normalized:
-            normalized.append(key)
-    return normalized or ["culture", "food", "outdoor"]
-
-def pick_poi_for_interest(destination, interest, budget_level):
-    candidates = POI_POOL.get(interest, [])
-    # prefer items with cost <= budget_level, else allow medium/high if necessary
-    preferred = [p for p in candidates if COST_RANK[p["cost"]] <= budget_level]
-    pool = preferred or candidates
-    if not pool:
-        return None
-    p = random.choice(pool).copy()
-    p["name"] = f"{destination} - {p['name']}"
-    return p
-
-def generate_itinerary(data):
-    destination = data["destination"]
-    days = data["days"]
-    budget = data.get("budget", "medium").lower()
-    interests = normalize_interests(data.get("interests") or [])
-    travel_style = data.get("travel_style", "balanced")
-    budget_level = COST_RANK.get(budget, 2)
-
-    all_interests = interests
-    # Build a pool of POIs per interest
-    day_plans = []
-    used = []
-    for d in range(1, days + 1):
-        slots = {"morning": None, "afternoon": None, "evening": None}
-        # Rotate interests to balance
-        random.shuffle(all_interests)
-        for idx, slot in enumerate(slots.keys()):
-            interest = all_interests[idx % len(all_interests)]
-            poi = pick_poi_for_interest(destination, interest, budget_level)
-            if poi:
-                # avoid immediate duplicates if possible
-                tries = 0
-                while poi["name"] in used and tries < 6:
-                    poi = pick_poi_for_interest(destination, interest, budget_level)
-                    tries += 1
-                used.append(poi["name"])
-                slots[slot] = {
-                    "activity": poi["name"],
-                    "description": poi["desc"],
-                    "category": interest,
-                    "estimated_cost": COST_ESTIMATE.get(poi["cost"], 20)
-                }
-        # Optionally remove evening for relaxed travel style
-        if travel_style == "relaxed" and random.random() < 0.3:
-            slots["evening"] = {"activity": "Leisure evening", "description": "Relax and enjoy local ambiance.", "category": "relax", "estimated_cost": 10}
-        # Compute budget note
-        est_cost = sum(v["estimated_cost"] for v in slots.values() if v)
-        if budget_level == 1:
-            note = f"Approx {est_cost}$ - budget-conscious choices with free/cheap options."
-        elif budget_level == 2:
-            note = f"Approx {est_cost}$ - mix of paid attractions and local eats."
-        else:
-            note = f"Approx {est_cost}$ - includes premium experiences."
-        day_plans.append({
-            "day": d,
-            "morning": slots["morning"],
-            "afternoon": slots["afternoon"],
-            "evening": slots["evening"],
-            "budget_note": note
-        })
-
-    overview = f"{days}-day {budget} budget trip to {destination} focused on {', '.join(all_interests)}."
-    tips = [
-        "Book popular attractions in advance when possible.",
-        "Carry a reusable water bottle and comfortable shoes.",
-        f"Adjust pace to your travel style: {travel_style}.",
-        "Check local opening hours and transit options."
-    ]
-    return {
-        "destination": destination,
-        "days": days,
-        "budget": budget,
-        "interests": all_interests,
-        "travel_style": travel_style,
-        "overview": overview,
-        "itinerary": day_plans,
-        "tips": tips,
-        "generated_at": datetime.datetime.utcnow().isoformat() + "Z"
+TEMPLATES = {
+    'culture': {
+        'morning': ["Historic walking tour of central {dest}", "Local market visit and neighborhood stroll"],
+        'afternoon': ["Visit a cultural center or landmark", "Guided city history tour"],
+        'evening': ["Attend a local performance or concert", "Evening stroll in the old town"]
+    },
+    'museums': {
+        'morning': ["Explore the main museum of {dest}", "Special exhibition at the modern art museum"],
+        'afternoon': ["Museum cafe and collections", "Interactive science center visit"],
+        'evening': ["Museum night event or lecture"]
+    },
+    'food': {
+        'morning': ["Local breakfast spot and bakery tour", "Coffee tasting at a specialty cafe"],
+        'afternoon': ["Street food tour or cooking class", "Lunch at a recommended neighborhood restaurant"],
+        'evening': ["Dinner at a top local restaurant", "Foodie walking tour of evening markets"]
+    },
+    'outdoor': {
+        'morning': ["Scenic hike or park visit", "Botanical gardens and morning walk"],
+        'afternoon': ["Boat ride or lakeside picnic", "Bike tour through scenic routes"],
+        'evening': ["Sunset viewpoint and photography", "Riverside promenade and casual dining"]
     }
+}
 
-@app.route("/health", methods=["GET"])
+def normalize_interests(raw):
+    if not raw:
+        return []
+    if isinstance(raw, str):
+        parts = [p.strip().lower() for p in raw.replace(';',',').split(',') if p.strip()]
+    elif isinstance(raw, list):
+        parts = [str(p).strip().lower() for p in raw if str(p).strip()]
+    else:
+        parts = []
+    normalized = []
+    for p in parts:
+        mapped = INTEREST_MAP.get(p)
+        if mapped and mapped not in normalized:
+            normalized.append(mapped)
+    return normalized
+
+def choose_activity(interest, period, dest):
+    opts = TEMPLATES.get(interest, {}).get(period, [])
+    if not opts: return ""
+    choice = random.choice(opts)
+    return choice.format(dest=dest)
+
+def budget_note_for(day_index, budget):
+    notes = {
+        'low': "Budget-friendly choices; prioritize free/low-cost activities.",
+        'mid': "Mixed budget: some paid attractions and local dining.",
+        'high': "Comfortable budget: include premium meals and paid experiences."
+    }
+    return notes.get(budget, "Varied budget options available.")
+
+@app.route('/health', methods=['GET'])
 def health():
-    return jsonify({"status": "ok"})
+    return jsonify(status="ok")
 
-@app.route("/", methods=["GET"])
+@app.route('/', methods=['GET'])
 def index():
     return send_from_directory(".", "index.html")
 
@@ -160,36 +82,74 @@ def index():
 def generated_image_file(filename):
     return send_from_directory(os.path.join(app.root_path, "generated_images"), filename)
 
-@app.route("/api/itinerary", methods=["POST"])
-def api_itinerary():
-    logger.info("Received /api/itinerary request")
-    data = request.get_json(silent=True)
-    if not data:
-        logger.warning("Bad request: no JSON")
-        return jsonify({"error": "Invalid JSON payload"}), 400
-    destination = data.get("destination", "")
-    days = data.get("days")
-    if not destination or not isinstance(destination, str) or not destination.strip():
-        return jsonify({"error": "destination is required"}), 400
+@app.route('/api/itinerary', methods=['POST'])
+def create_itinerary():
+    data = request.get_json() or {}
+    destination = (data.get('destination') or "").strip()
+    days_raw = data.get('days')
+    budget = (data.get('budget') or "mid").lower()
+    travel_style = (data.get('travel_style') or "balanced").lower()
+    interests_raw = data.get('interests')
+
+    errors = []
+    if not destination:
+        errors.append({"field":"destination","message":"destination is required"})
     try:
-        days = int(days)
+        days = int(days_raw)
+        if days < 1 or days > 14:
+            errors.append({"field":"days","message":"days must be between 1 and 14"})
     except Exception:
-        return jsonify({"error": "days must be an integer"}), 400
-    if days < 1 or days > 14:
-        return jsonify({"error": "days must be between 1 and 14"}), 400
-    try:
-        itinerary = generate_itinerary({
-            "destination": destination.strip(),
-            "days": days,
-            "budget": data.get("budget", "medium"),
-            "interests": data.get("interests", []),
-            "travel_style": data.get("travel_style", "balanced")
-        })
-        logger.info("Itinerary generated successfully")
-        return jsonify(itinerary)
-    except Exception as e:
-        logger.exception("Error generating itinerary")
-        return jsonify({"error": "Internal server error", "details": str(e)}), 500
+        errors.append({"field":"days","message":"days must be an integer between 1 and 14"})
+    if errors:
+        return jsonify(errors=errors), 400
+
+    normalized = normalize_interests(interests_raw)
+    if not normalized:
+        normalized = DEFAULT_INTERESTS.copy()
+
+    random.seed(f"{destination}-{days}-{budget}-{','.join(normalized)}-{travel_style}")
+
+    itinerary = []
+    for d in range(1, days+1):
+        day_block = {"day": d, "morning": "", "afternoon": "", "evening": "", "budget_note": budget_note_for(d, budget)}
+        # Determine activity density
+        if travel_style == 'relaxed':
+            periods = ['morning','evening']
+        elif travel_style == 'active':
+            periods = ['morning','afternoon','evening']
+        else:
+            periods = ['morning','afternoon']
+        # rotate interests
+        for i, period in enumerate(periods):
+            interest = normalized[(d + i) % len(normalized)]
+            activity = choose_activity(interest, period, destination)
+            setattr_val = activity
+            day_block[period] = activity
+        # Ensure at least one activity
+        if not any(day_block[p] for p in ['morning','afternoon','evening']):
+            day_block['afternoon'] = f"Free exploration in {destination} (flexible activities)"
+        itinerary.append(day_block)
+
+    overview = f"{days}-day {travel_style} trip to {destination} focused on {', '.join(normalized)} with a {budget} budget."
+    tips = [
+        "Book popular attractions in advance during high season.",
+        "Carry a refillable water bottle and comfortable shoes.",
+        "Check opening hours for museums and special events."
+    ]
+    response = {
+        "destination": destination,
+        "days": days,
+        "budget": budget,
+        "interests": normalized,
+        "travel_style": travel_style,
+        "overview": overview,
+        "itinerary": itinerary,
+        "tips": tips,
+        "generated_at": datetime.datetime.utcnow().isoformat() + "Z"
+    }
+    print(f"[{response['generated_at']}] Generated itinerary for {destination}, days={days}, interests={normalized}")
+    return jsonify(response), 200
+
 
 def slugify(value):
     slug = re.sub(r"[^a-zA-Z0-9]+", "-", value.strip().lower()).strip("-")
@@ -212,14 +172,7 @@ def submit_apifree_destination_image(prompt, output_path):
     submit_response = requests.post(
         f"{base_url}/image/submit",
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-        json={
-            "model": image_model,
-            "prompt": prompt,
-            "negative_prompt": "blurry, distorted text, watermark, low quality, deformed objects",
-            "width": 768,
-            "height": 512,
-            "num_images": 1,
-        },
+        json={"model": image_model, "prompt": prompt, "negative_prompt": "blurry, distorted text, watermark, low quality, deformed objects", "width": 768, "height": 512, "num_images": 1},
         timeout=120,
     )
     submit_response.raise_for_status()
@@ -279,16 +232,11 @@ def api_destination_image():
     output_path = os.path.join(image_dir, filename)
     try:
         request_id = submit_apifree_destination_image(prompt, output_path)
-        return jsonify({
-            "destination": destination,
-            "image_url": f"/generated_images/{filename}",
-            "prompt": prompt,
-            "request_id": request_id,
-        })
+        return jsonify({"destination": destination, "image_url": f"/generated_images/{filename}", "prompt": prompt, "request_id": request_id})
     except Exception as e:
         logger.exception("Error generating destination image")
         return jsonify({"error": "Image generation failed", "details": str(e)}), 500
 
 if __name__ == '__main__':
-    port = int(os.getenv("PORT", "5000"))
-    app.run(host="0.0.0.0", port=port)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)

@@ -1,34 +1,28 @@
 @startuml
 left to right direction
-skinparam packageStyle rectangle
 
 actor Tourist
 actor "Travel Agency Assistant" as Assistant
 
 rectangle "Travel Planner Generator" {
-  usecase "Enter Preferences\n(Destination, Days, Budget, Interests)" as UC_Enter
-  usecase "Generate Itinerary\n(Day-by-day planning)" as UC_Generate
-  usecase "View Website\n(User-facing UI, printable)" as UC_View
-  usecase "Request Destination Image\n(Thumbnail / Photo)" as UC_Image
-  usecase "Access API\nPOST /api/itinerary" as UC_API
+  usecase "Enter preferences\n(destination, length, budget, interests)" as UC_Enter
+  usecase "Generate itinerary" as UC_Generate
+  usecase "View website" as UC_Website
+  usecase "Request destination image" as UC_Image
+  usecase "Access API\n(POST /api/itineraries)" as UC_API
 }
 
-' Actor relationships
-Tourist --> UC_View
-Tourist --> UC_Enter
-Tourist --> UC_Image
-Tourist --> UC_API
+Tourist -- UC_Website
+Tourist -- UC_Enter
+Tourist -- UC_Image
 
-Assistant --> UC_View
-Assistant --> UC_Enter
-Assistant --> UC_Generate
-Assistant --> UC_API
+Assistant -- UC_Enter
+Assistant -- UC_Generate
+Assistant -- UC_API
+Assistant -- UC_Image
 
-' Use case relationships
-UC_Generate .> UC_Enter : <<include>>
-UC_View .> UC_Generate : <<include>>
-UC_API .> UC_Generate : <<include>>
-UC_View .> UC_Image : <<extend>>
-UC_API .> UC_Image : <<extend>>
-
+UC_Generate ..> UC_Enter : <<include>>
+UC_API ..> UC_Generate : <<include>>
+UC_Website ..> UC_Enter : <<include>>
+UC_Website ..> UC_Generate : <<include>>
 @enduml

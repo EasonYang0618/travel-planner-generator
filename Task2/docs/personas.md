@@ -1,19 +1,15 @@
-1) Solo leisure traveler
-- Role: Independent tourist planning a short city break.
-- Goal: Quickly generate a day-by-day itinerary tailored to interests (food, museums, nightlife) and a modest budget.
-- Main concern: Itinerary accuracy and realistic timing (transit/walking times) so plans don’t feel rushed or infeasible.
+1) Role: Leisure tourist (Emily)  
+   Goal: Quickly generate a clear, day-by-day itinerary that matches her destination, interests and budget so she can decide what to do each day.  
+   Main concern: Too many options or clutter — wants simple, readable plans she can view on mobile, print, or save offline.
 
-2) Family trip planner
-- Role: Parent organizing a multi-day trip for a family with young children.
-- Goal: Create a safe, kid-friendly schedule with appropriate pacing, meal breaks and easy transport options.
-- Main concern: Suitability and reliability of activities (age-appropriate, opening hours) and having clear, printable plans to share with family.
+2) Role: Family trip planner (Carlos)  
+   Goal: Build a kid‑friendly, realistic multi-day schedule that balances activities, travel time and a modest budget.  
+   Main concern: Accuracy of time/cost estimates and safety/age-appropriateness — needs confident, tweakable plans with built-in breaks.
 
-3) Budget-conscious traveler
-- Role: Student or backpacker traveling on a tight budget.
-- Goal: Maximize experiences per day while minimizing cost; prefer free/low-cost attractions and public transit.
-- Main concern: Hidden costs and inaccurate price estimates — needs clear cost tiers and reliable budgeting guidance.
+3) Role: Travel agency agent (Sofia)  
+   Goal: Rapidly produce professional itineraries for clients, customize them, and deliver/export proposals.  
+   Main concern: Ability to edit templates, save client profiles, export/print PDFs, and trust recommendation quality so she can present dependable options.
 
-4) Travel agency staff / operator
-- Role: Small-agency employee using the app to produce client itineraries and proposals.
-- Goal: Rapidly generate, tweak and export customised itineraries for clients and integrate results into agency workflows (printable PDFs, booking links).
-- Main concern: Control and customisation (ability to override recommendations), API reliability, data privacy and easy export/printing.
+4) Role: Developer / integrator (Liam)  
+   Goal: Programmatically generate and fetch itineraries via the Flask API to automate client workflows and integrate with the agency’s systems.  
+   Main concern: Clear API documentation, stable input/output schema, authentication, rate limits and predictable error handling for reliable automation.

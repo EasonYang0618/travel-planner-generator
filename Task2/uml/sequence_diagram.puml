@@ -1,24 +1,25 @@
 @startuml
-actor User
+participant User
 participant Website
-participant "Flask API" as API
+participant "Flask API" as FlaskAPI
 participant APIFree
 
 User -> Website: Submit travel preferences\n(destination, dates, interests)
 activate Website
 
-Website -> API: POST /generate_itinerary\n(payload: preferences)
-activate API
+Website -> FlaskAPI: POST /generate\n(prefs JSON)
+activate FlaskAPI
 
-API -> APIFree: Request suggestions/generate itinerary\n(forward preferences)
+FlaskAPI -> APIFree: POST /create-itinerary\n(prefs)
 activate APIFree
 
-APIFree --> API: Return itinerary data + image URL/base64
+APIFree --> FlaskAPI: 200 OK\n(itinerary data + image URL/base64)
 deactivate APIFree
 
-API --> Website: 200 OK\nitinerary JSON + image data
-deactivate API
+FlaskAPI --> Website: 200 OK\n(itinerary JSON + image)
+deactivate FlaskAPI
 
-Website -> User: Display generated itinerary and image
+Website -> Website: Render itinerary and image
+Website --> User: Display generated itinerary and image
 deactivate Website
 @enduml
