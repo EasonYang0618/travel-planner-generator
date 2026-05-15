@@ -1,0 +1,1 @@
+Realistic editorial travel photography for a polished travel planner website: Kyoto, Japan, traditional streets, soft morning light, subtle temple architecture, seasonal nature, local food details, professional composition, no text, no logos, no watermark.

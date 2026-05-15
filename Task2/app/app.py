@@ -139,6 +139,10 @@ def health():
 def index():
     return send_from_directory(".", "index.html")
 
+@app.route("/generated_destination.png", methods=["GET"])
+def generated_destination_image():
+    return send_from_directory(".", "generated_destination.png")
+
 @app.route("/api/itinerary", methods=["POST"])
 def api_itinerary():
     logger.info("Received /api/itinerary request")
