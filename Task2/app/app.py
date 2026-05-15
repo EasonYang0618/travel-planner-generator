@@ -48,6 +48,24 @@ POI_POOL = {
 
 COST_RANK = {"low": 1, "medium": 2, "high": 3}
 COST_ESTIMATE = {"low": 10, "medium": 40, "high": 120}
+INTEREST_ALIASES = {
+    "nature": "outdoor",
+    "outdoors": "outdoor",
+    "museum": "museums",
+    "history": "culture",
+    "dining": "food",
+}
+
+def normalize_interests(interests):
+    if not isinstance(interests, list):
+        interests = [interests]
+    normalized = []
+    for item in interests:
+        key = str(item).strip().lower()
+        key = INTEREST_ALIASES.get(key, key)
+        if key in POI_POOL and key not in normalized:
+            normalized.append(key)
+    return normalized or ["culture", "food", "outdoor"]
 
 def pick_poi_for_interest(destination, interest, budget_level):
     candidates = POI_POOL.get(interest, [])
@@ -64,13 +82,11 @@ def generate_itinerary(data):
     destination = data["destination"]
     days = data["days"]
     budget = data.get("budget", "medium").lower()
-    interests = data.get("interests") or []
-    if not isinstance(interests, list):
-        interests = [interests]
+    interests = normalize_interests(data.get("interests") or [])
     travel_style = data.get("travel_style", "balanced")
     budget_level = COST_RANK.get(budget, 2)
 
-    all_interests = interests if interests else list(POI_POOL.keys())
+    all_interests = interests
     # Build a pool of POIs per interest
     day_plans = []
     used = []

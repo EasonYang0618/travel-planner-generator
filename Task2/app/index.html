@@ -393,6 +393,11 @@
             if(Array.isArray(dayObj.activities)) activities = dayObj.activities;
             else if(Array.isArray(dayObj)) activities = dayObj;
             else if(typeof dayObj === 'object' && dayObj.itinerary && Array.isArray(dayObj.itinerary)) activities = dayObj.itinerary;
+            else if(typeof dayObj === 'object'){
+              activities = ['morning', 'afternoon', 'evening']
+                .map(slot => dayObj[slot] ? Object.assign({ time: slot }, dayObj[slot]) : null)
+                .filter(Boolean);
+            }
             else if(Array.isArray(itinerary) && typeof itinerary[idx] === 'string') activities = [itinerary[idx]];
             else activities = [];
 
