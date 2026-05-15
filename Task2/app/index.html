@@ -314,6 +314,7 @@
           resultStatus.textContent = 'Ready';
           resultMessage.innerHTML = '<span style="color:var(--success)">Itinerary generated</span>';
           downloadJsonBtn.disabled = false;
+          generateDestinationImage(payload);
         } catch(err){
           showError(err.message || 'Request failed');
         } finally {
@@ -460,6 +461,35 @@
         }
       }
 
+      async function generateDestinationImage(payload){
+        destinationImageArea.innerHTML = `<div style="text-align:center"><strong style="display:block">${escapeHtml(payload.destination || 'Destination')}</strong><div style="font-size:12px;color:var(--muted);margin-top:6px">Generating AI image...</div></div>`;
+        try {
+          const resp = await fetch('/api/destination-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              destination: payload.destination,
+              interests: payload.interests,
+              travel_style: payload.travel_style
+            }),
+            credentials: 'same-origin'
+          });
+          if(!resp.ok){
+            let message = 'Image generation failed';
+            try {
+              const errJson = await resp.json();
+              message = errJson.error || errJson.details || message;
+            } catch(_) {}
+            throw new Error(message);
+          }
+          const imageData = await resp.json();
+          const cacheBuster = Date.now();
+          destinationImageArea.innerHTML = `<img src="${imageData.image_url}?t=${cacheBuster}" alt="AI-generated image for ${escapeHtml(payload.destination)}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;display:block;" />`;
+        } catch(err) {
+          destinationImageArea.innerHTML = `<div style="text-align:center"><strong style="display:block">${escapeHtml(payload.destination || 'Destination')}</strong><div style="font-size:12px;color:var(--muted);margin-top:6px">Image generation unavailable</div></div>`;
+        }
+      }
+
       // Download JSON
       downloadJsonBtn.addEventListener('click', ()=>{
         if(!latestResponse) return;
@@ -521,13 +551,6 @@
 
     })();
   </script>
-
-<script id="generated-image-embed">
-(function() {
-  const area = document.getElementById('destinationImageArea');
-  if (area) { area.innerHTML = `<img src="/generated_destination.png" alt="AI-generated destination image" style="width:100%;height:100%;object-fit:cover;border-radius:8px;display:block;" />`; }
-})();
-</script>
 
 </body>
 </html>
