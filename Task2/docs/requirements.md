@@ -1,213 +1,163 @@
-# Requirements Specification
+# Requirements for City Itinerary Generator (Flask API + Website)
 
-Project: City Travel Itinerary Generator — Flask API + Website  
-Scope: Coursework-level web application (Flask backend + simple frontend) that accepts destination, trip length, budget level, and interests and returns a clear day-by-day itinerary. External-service usage is optional and limited (e.g., static bundled datasets or optional API keys). Focus is on a working prototype rather than production-grade travel recommendation complexity.
-
----
-
-## Functional requirements
-
-Each requirement has: ID, brief description, priority (Must / Should / Could), and acceptance criteria.
-
-### F1 — User input form (website)
-- Description: Provide a web UI form where users enter:
-  - destination (city name)
-  - trip length (integer days)
-  - budget level (e.g., low / medium / high)
-  - interests (one or more from a predefined list, e.g., culture, food, outdoors, museums, nightlife)
-  - optional: start date (optional)
-- Priority: Must
-- Acceptance criteria:
-  - Form validates required fields client- and server-side.
-  - Trip length restricted to a sensible range (1–30).
-  - Interests selected from predefined options.
-  - On submit, form posts to backend and triggers itinerary generation.
-
-### F2 — Flask API endpoint (JSON)
-- Description: Provide an API endpoint (e.g., POST /api/itineraries) that accepts the same inputs as the web form and returns a generated itinerary in JSON.
-- Priority: Must
-- Acceptance criteria:
-  - Endpoint accepts JSON request body with specified fields.
-  - Returns HTTP 200 with JSON payload on success, or appropriate 4xx/5xx with error message.
-  - Response schema documented (see acceptance example).
-
-### F3 — Day-by-day itinerary generation
-- Description: Generate a day-by-day itinerary for the requested number of days based on destination, budget, and interests.
-- Priority: Must
-- Acceptance criteria:
-  - Output contains an entry for each day (1..N) with 3–6 activities or items per day (depending on trip length and "pace").
-  - Each activity includes a title, short description, estimated duration (e.g., 1.5h), and suggested time of day (morning/afternoon/evening).
-  - If travel time between activities is relevant, include approximate transit suggestions or links (e.g., walking 15m, metro line).
-
-### F4 — Budget-aware recommendations
-- Description: Tailor activity and venue suggestions to the selected budget level (low/medium/high).
-- Priority: Must
-- Acceptance criteria:
-  - Generated activities include budget-appropriate types (e.g., free/low-cost sights for low budget; paid experiences for higher budgets).
-  - Each activity includes an approximate cost category (Free / $ / $$ / $$$).
-
-### F5 — Interest-matching logic
-- Description: Prioritise activities that match selected interests.
-- Priority: Must
-- Acceptance criteria:
-  - At least 60% of activities align with one or more user-selected interests.
-  - Activities unrelated to chosen interests are marked as "optional" or less prominent.
-
-### F6 — Simple data source layer
-- Description: Use a compact, local dataset (CSV/JSON/SQLite) of activities/POIs for a set of example cities bundled with the app. Provide clear integration points for optional external APIs.
-- Priority: Must
-- Acceptance criteria:
-  - App runs without external API keys using bundled dataset.
-  - Code includes an adapter layer to plug in external data sources (e.g., third-party place APIs) later.
-
-### F7 — Web presentation of itinerary
-- Description: Display generated itinerary on the website in a clear, readable day-by-day format with headings, activity details, and simple visual cues (duration, cost).
-- Priority: Must
-- Acceptance criteria:
-  - Web page shows days as separate sections.
-  - Each activity shows title, description, duration, cost category, and optional map link.
-  - Page is usable on desktop and mobile (responsive layout).
-
-### F8 — Download / export (JSON)
-- Description: Allow users to download the generated itinerary as a JSON file.
-- Priority: Should
-- Acceptance criteria:
-  - A download button provides the JSON representation of the current itinerary.
-  - JSON matches the API response schema.
-
-### F9 — Error handling and user feedback
-- Description: Provide clear error messages for invalid inputs and generation failures (e.g., unknown destination, internal error).
-- Priority: Must
-- Acceptance criteria:
-  - Validation errors return informative messages on both web and API.
-  - Unknown or unsupported destinations return a friendly error and, if possible, a short list of supported nearby cities.
-
-### F10 — Save itinerary to a simple persistent store (optional user session)
-- Description: Allow users to save or revisit itineraries stored in a lightweight DB (e.g., SQLite) tied to an anonymous session or a short identifier.
-- Priority: Should
-- Acceptance criteria:
-  - User can save an itinerary and receive a unique URL or identifier to reload it.
-  - Saved items persist across server restarts (using SQLite or file-based storage).
-
-### F11 — Regenerate & tweak
-- Description: Provide controls to regenerate the itinerary (same inputs) and optionally tweak parameters (e.g., change pace or remove/add activities) and re-generate.
-- Priority: Should
-- Acceptance criteria:
-  - "Regenerate" button produces a different valid itinerary.
-  - Users can remove an activity client-side and request a rebalanced itinerary.
-
-### F12 — Usage / dev documentation and API spec
-- Description: Provide a README with setup, run, and API usage instructions and an API schema example (request/response).
-- Priority: Must
-- Acceptance criteria:
-  - README includes steps to run the Flask app locally, sample API request, and explanation of dataset/configuration.
-  - API endpoint documented with an example JSON request and response.
+Scope: a coursework-level web application (Flask backend + simple frontend) that accepts user inputs (destination, trip length, budget level, interests), generates a clear day-by-day itinerary, and exposes the functionality via a REST API and a website UI. The scope assumes a small curated dataset or lightweight external place-data calls (optional) and does not require enterprise-grade features.
 
 ---
 
-## Non-functional requirements
+## Functional Requirements
 
-These define system qualities, constraints, and acceptance metrics suitable for a coursework project.
+Each requirement includes a short rationale and an acceptance criterion. Priority key: MUST (core), SHOULD (important), MAY (optional/extension).
 
-### N1 — Performance (API response time)
-- Requirement: The API should generate and return an itinerary for a typical request within 2 seconds on a modest developer machine (e.g., 2 CPU cores, 2GB RAM).
-- Rationale: Good user experience for a small dataset and logic.
+FR1 — Input Form (Website)
+- Requirement: Provide a web form where users can enter:
+  - Destination (city name)
+  - Trip length (number of days, integer >=1)
+  - Budget level (e.g., low / medium / high)
+  - Interests (one or more from a list: culture, food, outdoors, museums, nightlife, shopping, family, etc.)
+- Rationale: Core user input for itinerary generation.
+- Acceptance: Submitting valid inputs triggers itinerary generation and shows results; invalid inputs show inline validation messages.
+- Priority: MUST
 
-### N2 — Availability
-- Requirement: The application should be runnable locally and capable of continuous operation on a single server with minimal downtime for the coursework demo.
-- Rationale: Demonstration must be reliable.
+FR2 — REST API Endpoint: Create Itinerary
+- Requirement: Expose a POST /api/itineraries endpoint that accepts JSON with the same fields as the web form and returns a generated itinerary in JSON.
+- Rationale: Programmatic access and separation of concerns for frontend.
+- Acceptance: Valid request returns HTTP 201 (or 200) and JSON with a day-by-day itinerary; invalid request returns 400 with error details.
+- Priority: MUST
 
-### N3 — Scalability (design)
-- Requirement: Design should separate data, generation logic, and presentation so future scaling (larger datasets or external services) is straightforward.
-- Rationale: Keep code modular and maintainable.
+FR3 — REST API Endpoint: Retrieve Itinerary
+- Requirement: Provide GET /api/itineraries/{id} to fetch a previously generated itinerary (if persistence implemented) or returned result for session-bound itineraries.
+- Rationale: Allow users or frontend to reload or share generated itineraries.
+- Acceptance: Known id returns 200 and itinerary JSON; unknown id returns 404.
+- Priority: SHOULD
 
-### N4 — Security: transport and input validation
-- Requirement: Serve the web UI over HTTPS in deployment scenarios that support it. Validate and sanitize all user inputs to prevent injection attacks.
-- Acceptance criteria:
-  - No raw SQL concatenation; use parameterized queries (if DB used).
-  - Server-side validation mirrors client validation.
+FR4 — Itinerary Generation Logic
+- Requirement: Generate a day-by-day plan that assigns 1–6 activities per day (configurable) aligned with interests, budget, and realistic travel times between attractions; include suggested time windows and short descriptions for each activity.
+- Rationale: Provide useful, realistic plans rather than unordered lists.
+- Acceptance: Returned itinerary contains days numbered 1..N, each with a list of activities having: title, short description, estimated duration, recommended time-of-day, and approximate cost tier.
+- Priority: MUST
 
-### N5 — Privacy & data minimisation
-- Requirement: Do not collect or store personal information by default. If saving itineraries, store only the request parameters and generated itinerary, not identifiable personal data.
-- Rationale: Minimize privacy risk for a small coursework app.
+FR5 — Data Source for Places/Activities
+- Requirement: Use a curated local dataset (JSON/SQLite) of attractions per city for coursework; optional integration with a public places API (e.g., OpenStreetMap or a mock external API) may be provided as an extension.
+- Rationale: Keep dependencies simple for coursework; allow later extension.
+- Acceptance: For covered cities, activities are drawn from dataset; external API calls are configurable and documented.
+- Priority: MUST
 
-### N6 — Maintainability & code quality
-- Requirement: Project should be organized with clear modules (routes, services/generation logic, data access, templates). Include inline comments and a short developer guide.
-- Acceptance criteria:
-  - Unit tests for core generation logic.
-  - Code linting or adherence to PEP8 style where practical.
+FR6 — Result Presentation (Website)
+- Requirement: Present the generated itinerary in a clear, readable day-by-day format on the website, with options to view details for each activity and to download or copy the itinerary (e.g., printable view or JSON export).
+- Rationale: Usable UI for tourists.
+- Acceptance: Web page shows itinerary with day headings and activity cards; a “Print/Export” control is present.
+- Priority: MUST
 
-### N7 — Testability
-- Requirement: Core itinerary generation logic must be unit-testable. Provide automated tests for at least the generation module and API endpoints.
-- Acceptance criteria:
-  - Automated tests covering key rules with target coverage of ~70% for core modules.
+FR7 — Input Validation and Error Handling
+- Requirement: Validate inputs both client-side (basic) and server-side; handle server errors gracefully and show user-friendly messages on the website and structured error responses from the API.
+- Rationale: Robustness and good UX.
+- Acceptance: Invalid requests return structured errors; website displays readable messages and does not crash.
+- Priority: MUST
 
-### N8 — Error logging and diagnostics
-- Requirement: Log server-side errors and key events to a file or console with sufficient detail to reproduce issues.
-- Acceptance criteria:
-  - Unhandled exceptions are logged with stack traces.
-  - Logs include request identifiers for correlation.
+FR8 — Session or Persistence (Lightweight)
+- Requirement: Store generated itineraries temporarily (in-memory or simple database) for retrieval during the session and optionally allow unique URLs for sharing (if persistence implemented).
+- Rationale: Improve usability for viewing/sharing results.
+- Acceptance: After generation, user can refresh page and still see itinerary (session or DB-backed); GET endpoint can return stored itinerary by id.
+- Priority: SHOULD
 
-### N9 — Usability
-- Requirement: The website should provide a clean, simple UX: single page for input and result, clear calls-to-action, and readable itinerary layout.
-- Acceptance criteria:
-  - New user can create and view an itinerary within three clicks/steps.
+FR9 — Filtering & Customization (Basic)
+- Requirement: Allow users to re-run generation with modified constraints (e.g., change interests, adjust budget, or prefer walking vs public transport) and update itinerary accordingly.
+- Rationale: Iterative user refinement.
+- Acceptance: Changing parameters and re-submitting yields adjusted itineraries.
+- Priority: SHOULD
 
-### N10 — Accessibility (basic)
-- Requirement: Follow basic accessibility practices (semantic HTML, labels for form fields, sufficient color contrast).
-- Acceptance criteria:
-  - Form fields have labels; page is navigable by keyboard; alt text provided for non-critical images.
+FR10 — Minimal Admin/Developer Controls
+- Requirement: Provide simple CLI or admin endpoint to load/update the local dataset (e.g., import JSON), and configuration for toggling external API usage.
+- Rationale: Maintainability for coursework demonstration.
+- Acceptance: Developer can load dataset via documented command or endpoint.
+- Priority: MAY
 
-### N11 — Portability / deployment
-- Requirement: The app should be runnable locally using a documented virtual environment (venv) and a single command (e.g., flask run or a provided script). Optionally deployable to a simple PaaS (Heroku-like) without heavy changes.
-- Acceptance criteria:
-  - README includes requirements.txt and instructions; app can be started on a fresh environment.
-
-### N12 — Rate limiting & abuse protection (optional)
-- Requirement: Implement simple rate limiting or throttling for the API to prevent accidental overload during demos (e.g., 60 requests per minute per IP).
-- Priority: Could
-- Acceptance criteria:
-  - Basic in-app rate limiting (e.g., Flask extension or middleware) configurable for demo runs.
-
----
-
-## Constraints and assumptions
-- The app is intended as a coursework prototype, not a production travel platform.
-- The initial dataset will include a limited number of sample cities sufficient for demo purposes. Integration with live third-party APIs is optional and should be configurable via API keys.
-- No user authentication is required for the base scope; persistent saves are anonymous (session or identifier-based).
-- Mapping or routing functionality will consist of simple external links (e.g., Google Maps URL) rather than embedded, interactive maps (optional enhancement).
-
----
-
-## Example API request/response (informal)
-Request:
-{
-  "destination": "Lisbon",
-  "days": 3,
-  "budget": "medium",
-  "interests": ["food", "culture"],
-  "start_date": "2026-07-10"  // optional
-}
-
-Response (high-level):
-{
-  "destination": "Lisbon",
-  "days": 3,
-  "itinerary": [
-    {
-      "day": 1,
-      "date": "2026-07-10",
-      "activities": [
-        {"title": "Belém Tower", "description": "...", "duration_hours": 1.5, "time_of_day": "morning", "cost": "$", "map_link": "..."},
-        ...
-      ]
-    },
-    ...
-  ],
-  "generated_at": "...",
-  "notes": "Estimated costs are indicative."
-}
+FR11 — Basic Logging for Requests and Errors
+- Requirement: Log incoming API requests and critical errors (to console or file) for debugging.
+- Rationale: Troubleshooting during development.
+- Acceptance: Logs include timestamp, endpoint, input summary, and error stack for exceptions.
+- Priority: MUST
 
 ---
 
-These requirements are scoped to enable a complete coursework implementation: a Flask backend exposing a JSON API plus a simple website front-end, with clear acceptance criteria and modest non-functional targets.
+## Non-Functional Requirements
+
+NFRs include measurable targets where appropriate. Priority: MUST / SHOULD / MAY.
+
+NFR1 — Technology Stack
+- Requirement: Implement backend with Python Flask; frontend with server-rendered templates (Jinja2) or a lightweight single-page interface (plain JS). Use SQLite or JSON for the dataset.
+- Rationale: Appropriate for coursework and easy deployment.
+- Priority: MUST
+
+NFR2 — Performance
+- Requirement: API should respond to valid itinerary requests within 2 seconds for local dataset lookups (average case). For external API calls, document expected additional latency.
+- Rationale: Good user experience.
+- Acceptance: Measured local responses average <= 2s under light load.
+- Priority: SHOULD
+
+NFR3 — Availability & Reliability
+- Requirement: App should handle typical coursework/demo usage (single-digit concurrent users) without crashes; include basic retry or fail-safe behavior for transient external API failures.
+- Rationale: Stable demos during evaluation.
+- Priority: MUST
+
+NFR4 — Security (Basic)
+- Requirement: Sanitize and validate all inputs to prevent injection; do not enable admin/developer endpoints in production without protection; store secrets (API keys) in environment variables, not source code.
+- Rationale: Basic security hygiene.
+- Acceptance: No plaintext secrets in repo; input validation on server.
+- Priority: MUST
+
+NFR5 — Privacy / Data Handling
+- Requirement: Do not collect personal PII; if persistence stores itineraries, avoid associating them with real user identities unless explicitly required and documented.
+- Rationale: Simplicity and privacy for coursework.
+- Priority: MUST
+
+NFR6 — Usability & Accessibility
+- Requirement: Website should be usable on desktop and mobile viewports, with clear visual hierarchy and accessible form controls; follow basic WCAG principles (labels for inputs, sufficient color contrast).
+- Rationale: Inclusive design and demo readiness.
+- Acceptance: Form inputs have labels; pages usable on 320px–1200px widths.
+- Priority: SHOULD
+
+NFR7 — Maintainability & Code Quality
+- Requirement: Codebase should be organized, modular, and include README with setup/run instructions; include unit tests for core itinerary generation logic and API endpoints.
+- Rationale: Demonstrable engineering practices for coursework.
+- Acceptance: README explains run steps; at least 5 unit tests covering generation and validation.
+- Priority: MUST
+
+NFR8 — Logging & Observability
+- Requirement: Capture request-level logs and error logs; logs should be human-readable and suitable for debugging a demo.
+- Rationale: Simplify grading/debugging.
+- Priority: SHOULD
+
+NFR9 — Scalability (Minimal)
+- Requirement: Design components so data source can be swapped with minimal code changes (e.g., abstract data access layer) to enable future scaling to real APIs/datasets.
+- Rationale: Clean architecture for extension.
+- Priority: SHOULD
+
+NFR10 — Deployability
+- Requirement: App can be started locally with a single command (e.g., flask run or a provided script) and documented dependencies (requirements.txt). Optional Dockerfile for containerized demo is a plus.
+- Rationale: Ease of evaluation.
+- Acceptance: Project can be launched by following README instructions; Docker optional.
+- Priority: MUST
+
+NFR11 — Documentation
+- Requirement: Provide API documentation (README or simple OpenAPI/Swagger if feasible) describing endpoints, request/response schemas, and example requests.
+- Rationale: Clear interface for graders and integration.
+- Priority: SHOULD
+
+NFR12 — Testing & Quality Assurance
+- Requirement: Include unit tests for itinerary generator logic and integration tests for critical API endpoints. Automated test command (e.g., pytest) documented.
+- Rationale: Validate correctness and support grading.
+- Acceptance: Tests run via documented command and exit non-zero on failure.
+- Priority: MUST
+
+---
+
+## Constraints and Assumptions
+- The project is a coursework deliverable: keep third-party dependencies minimal and document any external APIs used.
+- Dataset of attractions will cover a small set of sample cities; undefined cities should return a friendly “city not supported” response.
+- No full user authentication system is required unless explicitly added as an extension.
+- Geocoding/transport time estimates may be simplified (static travel time heuristics) for coursework.
+
+---
+
+This set of requirements is intentionally scoped for a small Flask-based coursework project while leaving room for useful extensions (external API integration, persistence, sharing).

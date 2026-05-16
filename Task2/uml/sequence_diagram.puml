@@ -1,24 +1,24 @@
 @startuml
 participant User
 participant Website
-participant "Flask API" as FlaskAPI
-participant APIFree
+participant "Flask API" as API
+participant "APIFree" as APIFree
 
-User -> Website: Submit travel preferences (destination, dates, interests)
+User -> Website: Submit travel preferences\n(destination, dates, interests)
 activate Website
 
-Website -> FlaskAPI: POST /generate (preferences)
-activate FlaskAPI
+Website -> API: POST /generate_itinerary\n(payload: preferences)
+activate API
 
-FlaskAPI -> APIFree: Request itinerary + image (preferences)
+API -> APIFree: POST /create_itinerary_and_image\n(payload: preferences)
 activate APIFree
 
-APIFree --> FlaskAPI: 200 OK (itinerary JSON, image URL/base64)
+APIFree --> API: 200 OK\n{itinerary, image_url or image_base64}
 deactivate APIFree
 
-FlaskAPI --> Website: 200 OK (itinerary, image)
-deactivate FlaskAPI
+API --> Website: 200 OK\n{itinerary, image}
+deactivate API
 
-Website -> User: Display generated itinerary and image
+Website --> User: Display generated itinerary and image
 deactivate Website
 @enduml

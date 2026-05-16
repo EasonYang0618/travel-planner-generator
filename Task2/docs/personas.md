@@ -1,15 +1,15 @@
-- Role: Emma — Budget Backpacker (solo traveler, 25–32)
-  - Goal: Quickly generate a low-cost, high-value 3–7 day itinerary focused on local food, nightlife and walking tours.
-  - Main concern: Accurate cost estimates and realistic pacing so she can stick to a tight budget without wasting time on expensive or impractical suggestions.
+1) Role: Time-limited solo tourist (weekend sightseer)
+   - Goal: Fit the best, highest-priority sights into a 2–3 day visit with minimal downtime.
+   - Main concern: Itinerary must be realistic about travel times and opening hours so the schedule isn’t too tight or unachievable.
 
-- Role: Raj — Time‑Pressed Business Traveler (frequent short trips)
-  - Goal: Get a compact, efficient 1–2 day itinerary that maximizes sightseeing near his meetings and fits strict time windows.
-  - Main concern: Precision of timing and travel durations (commute times, opening hours) so plans don’t conflict with work commitments.
+2) Role: Family planner (parents with young children)
+   - Goal: Create a child-friendly day-by-day plan with suitable attractions, meal/rest breaks, and short transfers.
+   - Main concern: Safety, predictable pacing, and clear details (kid policies, stroller access, nearby facilities).
 
-- Role: Sofia — Family Trip Planner (parent organizing travel for 2 adults + 2 kids)
-  - Goal: Build a kid‑friendly, flexible 4–6 day plan that balances attractions, downtime and easy logistics.
-  - Main concern: Safety, child-appropriate activities and realistic transitions (stroller/wheelchair access, meal breaks) so the day isn’t overfull.
+3) Role: Budget backpacker
+   - Goal: Maximise experiences on a low budget by prioritising free/cheap attractions and economical transit options.
+   - Main concern: Hidden costs and vague transport/price details — needs clear costs, walking times, and low-cost alternatives.
 
-- Role: Lena — Travel Agency Advisor (small agency staff using the app)
-  - Goal: Rapidly generate and customize itineraries for clients of varied budgets and interests, and export/share via the website or API.
-  - Main concern: Reliability, easy editing and clean exports (printable/day-by-day) plus predictable API responses so she can deliver professional proposals quickly.
+4) Role: Travel-agency staff member (itinerary creator)
+   - Goal: Quickly generate, tweak, and export branded itineraries for clients using the web UI or Flask API.
+   - Main concern: Reliability and editability of generated plans, plus easy export/printing and ability to override suggestions.

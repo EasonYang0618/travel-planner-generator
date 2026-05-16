@@ -2,67 +2,62 @@
   "user_stories": [
     {
       "id": "US1",
-      "role": "As a traveler",
-      "goal": "I want to enter a destination, trip length, budget level, and interests so that the system can generate a personalised day-by-day travel itinerary",
-      "benefit": "So I receive a ready-to-follow plan tailored to my constraints and preferences",
+      "role": "Tourist",
+      "goal": "Enter destination, trip length, budget level, and interests to generate a personalised day-by-day itinerary",
+      "benefit": "Quickly receive a tailored travel plan that matches my constraints and preferences",
       "acceptance_criteria": [
-        "A form or API accepts destination, start date or start-day, trip length (days), budget level (low/medium/high) and a list of interests",
-        "Input is validated and clear error messages are returned for missing/invalid fields",
-        "The system returns a day-by-day itinerary where each day lists 3–6 activities or visits",
-        "Returned itinerary respects trip length, incorporates stated interests, and filters suggestions consistent with the budget level",
-        "Itinerary includes estimated times or time windows for each activity and a short description for each item"
+        "There is an input form (website) and a JSON payload (API) that accept destination, trip_length (days), budget_level, and a list of interests",
+        "Submitting valid input returns an itinerary containing exactly trip_length days",
+        "Each day in the itinerary includes at least one activity, estimated time or duration, and an estimated cost",
+        "Returned itinerary respects the selected budget_level and prioritises activities that match the selected interests"
       ]
     },
     {
       "id": "US2",
-      "role": "As a traveler",
-      "goal": "I want to view the generated itinerary on the website with map and details so I can easily follow and visualise my trip",
-      "benefit": "So I can plan logistics and see locations spatially without leaving the app",
+      "role": "Tourist",
+      "goal": "View the generated itinerary in a clear, day-by-day layout on the website",
+      "benefit": "Easily follow and use the travel plan during the trip",
       "acceptance_criteria": [
-        "Website displays the itinerary in a clear day-by-day layout with activity names, times, descriptions and estimated durations",
-        "Each activity links to a map marker and clicking an activity highlights its location on the map",
-        "Map shows all day activities with markers and supports pan/zoom; hovering a marker shows a short activity summary",
-        "The page is responsive and usable on mobile and desktop viewports",
-        "User can export or print the itinerary as a simple printable view (PDF or print stylesheet)"
+        "The website displays days in order with activity titles, descriptions, estimated times, and cost per activity",
+        "Each activity includes an optional link to a map or external resource when available",
+        "The itinerary page is readable on desktop and mobile (responsive)",
+        "There is a 'Print / Export' option that produces a printer-friendly view or downloadable PDF"
       ]
     },
     {
       "id": "US3",
-      "role": "As a user",
-      "goal": "I want to save, name, and later edit my generated itineraries so I can refine plans and reuse them",
-      "benefit": "So I can keep customised plans and iterate on them without re-entering all preferences",
+      "role": "Developer / API consumer",
+      "goal": "Use a Flask API to programmatically generate itineraries",
+      "benefit": "Integrate itinerary generation into other systems or automate workflows",
       "acceptance_criteria": [
-        "Authenticated users can save an itinerary with a title and optional notes",
-        "Saved itineraries are listed in a user dashboard sorted by creation or modified date",
-        "Users can open a saved itinerary, make edits (reorder, add/remove activities, change times) and save updates",
-        "Changes to a saved itinerary are versioned or provide an option to overwrite vs. create new copy",
-        "Unauthenticated users receive a prompt to sign up or are offered a temporary local save option (e.g., download JSON)"
+        "A documented POST endpoint /api/generate accepts JSON with destination, trip_length, budget_level, and interests",
+        "The API returns JSON with HTTP 200 and a defined itinerary schema on success and HTTP 4xx with error details for invalid input",
+        "The API response includes metadata: generation_timestamp, estimated_total_cost, and confidence_score for recommendations",
+        "Rate-limited or well-formed error responses are returned for malformed requests"
       ]
     },
     {
       "id": "US4",
-      "role": "As an API consumer (developer)",
-      "goal": "I want a Flask API endpoint that accepts trip parameters and returns a machine-readable itinerary so I can integrate the service with other apps",
-      "benefit": "So third-party apps or scripts can programmatically generate and retrieve itineraries",
+      "role": "Tourist",
+      "goal": "Adjust preferences and regenerate or save different itinerary versions",
+      "benefit": "Iterate on plans without losing prior options and compare alternatives",
       "acceptance_criteria": [
-        "A documented POST endpoint (e.g., /api/itineraries) accepts JSON input with destination, trip length, budget, interests and returns JSON",
-        "Successful responses use HTTP 200 and include a structured itinerary: days array, each with activities (name, description, start_time, duration, coordinates)",
-        "Validation errors return appropriate 4xx status codes with machine-readable error messages",
-        "API returns consistent schema and content-type application/json and supports pagination or size limits for large responses",
-        "API responses are generated deterministically for the same input (or document variability) and include a request_id for tracing"
+        "Users can modify destination, trip_length, budget_level, or interests and request a regenerated itinerary",
+        "There is an option to save generated itineraries with a user-visible name and timestamp",
+        "Saved itineraries are listed with the ability to restore, delete, or compare two versions",
+        "Regenerating does not overwrite saved versions unless the user explicitly chooses to replace them"
       ]
     },
     {
       "id": "US5",
-      "role": "As an agency admin",
-      "goal": "I want to manage the database of points of interest and settings for activity selection so recommendations stay accurate and relevant",
-      "benefit": "So tourists get up-to-date, high-quality suggestions aligned with our offerings and constraints",
+      "role": "Travel Agent / Admin",
+      "goal": "Review and edit generated itineraries before delivering them to clients",
+      "benefit": "Ensure quality and customise proposals to client needs",
       "acceptance_criteria": [
-        "Admin interface or secured API supports CRUD operations on points of interest with fields: name, category, description, coordinates, opening hours, price range, tags",
-        "Changes to POIs are reflected in newly generated itineraries within a defined propagation window (e.g., immediately or documented delay)",
-        "Admin can configure prioritisation rules (e.g., weight by popularity, proximity, or budget compatibility) that affect suggestion ordering",
-        "All admin actions require authentication and are audited (record user, timestamp, change summary)",
-        "POI entries validate required fields and prevent duplicate coordinates+name entries"
+        "Admins can view a list of generated itineraries and open any itinerary for editing",
+        "Edits allow adding/removing activities, changing times, and adjusting costs with changes tracked",
+        "There is an approval or publish action that locks the itinerary for client view and records the approver and timestamp",
+        "A basic version history is available showing at least the last three changes with author and timestamp"
       ]
     }
   ]

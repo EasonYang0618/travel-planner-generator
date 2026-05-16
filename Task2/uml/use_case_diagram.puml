@@ -1,36 +1,40 @@
 @startuml
 left to right direction
-skinparam packageStyle rectangle
-
-actor Tourist
-actor "Travel Agency Assistant" as Assistant
-
-package "Travel Planner Generator" {
-  usecase "View website" as UC_View
-  usecase "Enter preferences\n(destination, days, budget, interests)" as UC_Enter
-  usecase "Generate itinerary\n(day-by-day, budget-aware)" as UC_Generate
-  usecase "Request destination image" as UC_Image
-  usecase "Access API\n(POST /api/itineraries)" as UC_API
+skinparam usecase {
+  BackgroundColor #FEF9E7
+  BorderColor #2E86C1
 }
 
-' Actor associations
-Tourist -- UC_View
-Tourist -- UC_Enter
-Tourist -- UC_Image
-Tourist -- UC_API
+actor Tourist
+actor "Travel Agency Assistant" as Agent
 
-Assistant -- UC_API
-Assistant -- UC_Enter
-Assistant -- UC_Image
+rectangle "Travel Planner Generator" {
+  usecase UC_Preferences as "Enter Preferences\n(destination, trip length,\nbudget level, interests)"
+  usecase UC_Generate as "Generate Itinerary\n(day-by-day plan)"
+  usecase UC_View as "View Website\n(responsive itinerary UI)"
+  usecase UC_Image as "Request Destination Image"
+  usecase UC_API as "Access API\n(POST /api/itineraries,\nGET /api/itineraries/{id})"
+}
 
-' Use case relationships
-UC_View .> UC_Enter : <<include>>
-UC_View .> UC_Image : <<include>>
+' Primary associations
+Tourist --> UC_Preferences
+Tourist --> UC_View
+Tourist --> UC_Image
+Tourist --> UC_API
 
-UC_Enter .> UC_Generate : <<include>>
-UC_API .> UC_Generate : <<include>>
+Agent --> UC_Preferences
+Agent --> UC_Generate
+Agent --> UC_View
+Agent --> UC_API
+Agent --> UC_Image
 
-' Optional extension point for image requests from API
-UC_API .> UC_Image : <<include>>
+' Use-case relationships
+UC_Preferences ..> UC_Generate : <<include>>
+UC_API ..> UC_Generate : <<include>>
+UC_View ..> UC_Image : <<include>>
+
+' Optional relationships to show alternate flows
+UC_Generate .> UC_View : result shown on
+UC_Generate .> UC_API : can be triggered via
 
 @enduml

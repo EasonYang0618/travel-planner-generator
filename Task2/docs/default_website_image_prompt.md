@@ -1,0 +1,1 @@
+A polished travel planning website hero image with a map, calendar, suitcase, route pins, subtle city landmarks, clean modern product style, bright natural light, professional composition, no text, no logos, no watermark

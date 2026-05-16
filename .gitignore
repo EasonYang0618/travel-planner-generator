@@ -4,3 +4,4 @@ __pycache__/
 .pytest_cache/
 *.pyc
 Task2/app/generated_images/
+data.db

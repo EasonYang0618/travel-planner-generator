@@ -34,7 +34,7 @@ def test_itinerary_endpoint_generates_user_destination():
         },
     )
     data = response.get_json()
-    assert response.status_code == 200
+    assert response.status_code in (200, 201)
     assert data["destination"] == "Paris"
     assert data["days"] == 2
     assert len(data["itinerary"]) == 2

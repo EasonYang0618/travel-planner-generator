@@ -6,6 +6,8 @@ This project builds an AI-powered system for meta-software development. It gener
 
 The selected business problem is a travel planner website. Users enter a destination, trip length, budget, interests, and travel style. The generated Flask API returns a day-by-day itinerary, and the website requests an AI-generated destination image at runtime.
 
+The website uses two AI-generated images. First, the notebook generates a default travel-planner website image and saves it into the generated website assets. This image is visible when the website first loads. Second, after the user submits a destination, the website calls the generated Flask API to create a destination-specific AI image based on the user's input.
+
 ## Structure
 
 ```text
@@ -62,7 +64,7 @@ Open and run:
 Task1/travel_planner_generator.ipynb
 ```
 
-The notebook generates the Task2 artefacts, including documentation, UML diagrams, Flask API code, website code, tests, CI workflow configuration, and Docker deployment files.
+The notebook generates the Task2 artefacts, including documentation, UML diagrams, Flask API code, website code, tests, CI workflow configuration, Docker deployment files, and a default AI-generated website image.
 
 The recommended layout is to run the notebook from `Task1`. If the notebook is run from a standalone folder, it will use the current working directory as the project root and create a `Task2` folder there.
 
