@@ -1,88 +1,77 @@
 Overview
-A web application (Flask API + browser UI) that helps tourists generate personalised city travel itineraries. Users supply destination, trip length, budget level, and interests; the system returns a clear, day-by-day plan suitable for printing, editing, or further booking. The product is targeted at a small travel agency seeking a lightweight, maintainable MVP to support customer consultations and simple self-service bookings.
+A lightweight web application (Flask API + website) that helps tourists generate personalized day-by-day city travel itineraries. Users supply destination, trip length, budget level, and interests; the system returns a clear, practical itinerary (activities per day with times, estimated costs, travel cues and map links). The product is aimed at a small travel agency to improve customer service and speed up itinerary creation without handling bookings.
 
 Goals
-- Provide personalised, coherent day-by-day itineraries from minimal inputs (destination, dates/length, budget, interests).
-- Expose the itinerary generator as a RESTful Flask API for internal and third-party use.
-- Deliver a simple, responsive website that non-technical users can use to generate and view itineraries.
-- Ship an MVP quickly with a maintainable codebase and clear extension points for future features (maps, bookings, accounts).
+- Provide fast, usable itinerary generation for single-city trips (MVP).
+- Allow tourists to specify destination, trip length, budget, and interests and receive a complete day-by-day plan.
+- Expose functionality via a RESTful Flask API and a consumer-facing website.
+- Deliver itineraries that are coherent, time-aware (reasonable daily schedules), and budget-aligned.
+- Keep data privacy simple (minimal PII), and permit caching of POI data to limit third-party API costs.
 
 Scope
 In-scope (MVP)
-- Input form (web + API) accepting:
-  - destination (city/name)
-  - trip length (days)
-  - budget level (low / medium / high)
-  - interests (multiple selectable categories, e.g., museums, food, outdoors)
-  - optional preferences: start date (for weekdays/weekends), mobility constraints (walking / public transit / car)
-- Itinerary generation engine that:
-  - produces a day-by-day schedule with times, activity names, short descriptions, suggested durations, and grouping by morning/afternoon/evening
-  - respects trip length, budget level, opening hours heuristics, and interest weighting
-  - avoids unrealistic travel times within a day using estimated travel durations between POIs
-- Web UI:
-  - responsive single-page experience to enter inputs, view itinerary, print/export PDF, and share via a link
-  - basic edit capability (reorder/remove activities)
+- User-facing website:
+  - Input form: destination (city), trip length (days), budget level (low/medium/high), interests (checkbox list).
+  - Display: generated itinerary with daily agenda, times, short descriptions, estimated costs, travel hints, and links to maps.
+  - Simple print/export to PDF or printable view.
 - Flask API:
-  - POST /api/itinerary -> JSON response with structured day-by-day itinerary
-  - Simple validation and error responses
-- Data sources:
-  - Integrate one primary POI data source (e.g., OpenStreetMap, public city APIs, or a third-party POI API) and fallback static data for small towns
-- Basic logging, input validation, and unit tests for core functionality
+  - POST /api/generate_itinerary — accepts input JSON, returns itinerary JSON.
+  - GET /api/status — health check.
+  - Basic authentication for agent/admin endpoints (if needed).
+- Itinerary generation engine:
+  - Rules-based planner that selects POIs by interest and budget, clusters into daily groups, assigns time windows and travel guidance.
+  - Use a curated POI database augmented by one or more third-party APIs (e.g., OpenTripMap, Google Places) with caching.
+- Data persistence:
+  - Lightweight datastore (e.g., SQLite) for POIs, cached API responses, and anonymized usage logs.
+- Basic admin UI or script to update POI data and interest categories.
+- Basic error handling and user-friendly messages.
 
-Out-of-scope (initial release)
-- User accounts, persistent user histories, or payment/booking integrations
-- Real-time availability or reservations
-- Full global coverage of small/remote locations (initial focus on major / medium-size cities)
-- Advanced personalization via machine learning
-- Multilingual UI beyond English (unless requested)
+Out of scope (initial release)
+- Real-time ticket booking, reservations, or payment processing.
+- Multi-city or complex transport routing between cities.
+- Real-time transit schedules, dynamic traffic-aware routing, or personalized location tracking.
+- Rich personalization based on prior user profiles or historical preferences beyond the current input.
+- Full production-level distributed scaling (single-instance deployment for agency use).
 
 Constraints
 Technical
-- Must be implemented using Flask for the API and a lightweight frontend framework or server-rendered templates (to match agency skillset).
-- Single-server deployment expected initially (limited horizontal scaling).
-- Limited integration budget: prefer free/open data sources (OpenStreetMap, public datasets); commercial API usage must be minimized or configurable.
+- Backend: Flask (Python) must serve the API and website.
+- Use of third-party POI/place APIs subject to usage limits, quotas, cost and licensing (must include caching layer and fallbacks).
+- Minimal hosting resources (single VM/container); assume modest concurrent usage.
+- Data storage: lightweight relational DB (SQLite or small PostgreSQL).
+Time & Budget
+- Minimal development budget and timeline: MVP to be delivered with conservative feature set.
+Regulatory & Privacy
+- Minimal PII: only what’s necessary to generate itineraries; comply with relevant local data protection rules (e.g., GDPR) where applicable.
 Operational
-- Limited engineering resources and time (MVP within 6–12 weeks).
-- External API rate limits and licensing (ensure compliance and caching).
-- Data quality: POI metadata, opening hours, and travel times may be incomplete—system must handle gaps gracefully.
-Security & Privacy
-- No requirement for storing sensitive PII in MVP; if any personal data is collected, comply with relevant privacy laws (e.g., GDPR) and minimize retention.
-Usability
-- Target users include non-technical tourists and agency agents; UI must be simple and mobile-friendly.
-Performance
-- Reasonable response times on modest hosting (see Success Criteria). Large-scale concurrency not required initially.
+- Must work reasonably well for major tourist cities; limited coverage for less-documented locations until POI data is enriched.
+Design & UX
+- Simple, mobile-friendly UI; prioritize clarity over advanced visualizations.
 
 Success Criteria
 Functional acceptance
-- API:
-  - POST /api/itinerary returns a well-structured JSON itinerary (days array, activities per day with time windows, durations, descriptions, location coordinates).
-  - Valid inputs produce itineraries; invalid inputs return meaningful 4xx errors.
-- Web UI:
-  - Users can generate, view, print/export, and perform basic edits on itineraries without errors.
-- Data/logic:
-  - Day plans respect trip length, budget level, and selected interests in >90% of manual verification cases.
+- API correctness: POST /api/generate_itinerary returns valid JSON itinerary for nominal inputs (city, days 1–14, budget ∈ {low,medium,high}, interests list).
+- Website correctness: Users can submit the form and receive a readable day-by-day itinerary in the browser.
+- Itinerary quality checks (sample-based): For a curated set of 10 popular cities, generated itineraries are judged acceptable by travel-agency reviewers in at least 80% of cases (coverage, timing, and interest relevance).
+Performance & Reliability
+- Typical response time for itinerary generation (with cached POI data): < 3 seconds; with cold external API lookups: < 8 seconds.
+- System uptime for agency usage: 99% (reasonable for a small deployment).
+Usability
+- User testing: ≥ 80% of test users can generate and understand an itinerary without help within 3 minutes.
+- Visual clarity: each day must show at least 2–6 activities with times, short descriptions, and map links.
+Business impact
+- Reduce manual itinerary drafting time for agents by at least 50% on typical single-city requests (measured in pilot).
+Security & Privacy
+- No storage of unnecessary PII; any stored user data must be deletable on request.
+- Basic protections against common web vulnerabilities (input validation, CSRF protection, HTTPS).
+Deliverables
+- Flask API implementation with documented endpoints and JSON schema.
+- Website with input form and itinerary presentation (printable view).
+- Itinerary generation engine (rules-based) and data caching layer.
+- Documentation: deployment, API usage, POI data sources and licensing notes, and admin instructions.
+Acceptance tests
+- Automated unit tests for itinerary generation logic.
+- Integration tests exercising the API and website form flow.
+- Manual review of sample generated itineraries for at least 10 cities.
 
-Performance & reliability
-- Average API response time for itinerary generation <= 5 seconds under normal load.
-- End-to-end generation (UI -> itinerary displayed) <= 7 seconds.
-- System availability >= 99% during business hours for the first 3 months.
-
-Quality & testing
-- Automated unit tests covering core itinerary logic and API endpoints (target >= 70% coverage for core modules).
-- End-to-end user acceptance tests for the main user flows (generate, edit, print).
-- At least 10 manual QA scenarios across 5 target cities pass before release.
-
-User/Business metrics (first 3 months)
-- At least 100 generated itineraries or comparable agency usage.
-- User satisfaction: average rating >= 4/5 from a small user survey of first users (agency staff / pilot customers).
-- Agency agent time saved: measurable reduction in average time to produce a consultation itinerary (target >= 30% reduction versus manual process).
-
-Acceptance tests (examples)
-- Given destination="Paris", days=3, budget="medium", interests=["art","food"] -> return 3 day entries with >=2 art/food activities per day and sensible travel times.
-- Invalid destination -> API returns 400 with helpful message.
-- Frontend: user can reorder two activities in a day and the change persists in the session/exported output.
-
-Notes / Next steps
-- Define the POI data provider and build caching strategy to mitigate rate limits.
-- Draft a lightweight API schema and wireframe the UI for sizing frontend effort.
-- Prioritise features for the first sprint: API contract, core itinerary algorithm, minimal web UI, and one or two city datasets for testing.
+This document defines a focused MVP to enable the travel agency to generate quick, personalized city itineraries via both an API and a website while leaving more advanced features (bookings, multi-city routing, deep personalization) for future phases.

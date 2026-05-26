@@ -6,605 +6,613 @@
   <title>Travel Planner Generator</title>
   <style>
     :root{
-      --bg:#f6f8fb;
+      --bg:#f6f7f9;
       --card:#ffffff;
       --muted:#6b7280;
-      --accent:#0f62fe;
-      --success:#047857;
+      --accent:#1f7bd6;
+      --success:#117a37;
       --danger:#b91c1c;
-      --glass: rgba(255,255,255,0.6);
-      --max-width:1100px;
+      --glass: rgba(255,255,255,0.7);
       font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
-    html,body{height:100%}
-    body{
-      margin:0;
-      background:linear-gradient(180deg,#f6f8fb 0%, #eef2f6 100%);
-      color:#111827;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      display:flex;
-      justify-content:center;
-      padding:28px 16px;
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#eef2f6 0%,var(--bg) 100%);color:#0f1724;}
+    header{padding:20px 28px;border-bottom:1px solid #e6e9ee;background:transparent;}
+    .container{max-width:1100px;margin:28px auto;padding:20px;display:grid;grid-template-columns:1fr 420px;gap:24px;align-items:start;}
+    @media (max-width:980px){.container{grid-template-columns:1fr;padding:12px}}
+    h1{margin:0;font-size:20px;letter-spacing:-0.2px}
+    p.lead{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+    /* Form card */
+    .card{background:var(--card);border-radius:10px;padding:18px;box-shadow:0 6px 18px rgba(18,22,30,0.06);border:1px solid #eef2f6}
+    form .row{display:flex;gap:12px}
+    label{display:block;font-size:13px;color:#0b1220;margin-bottom:6px}
+    input[type="text"], input[type="number"], select, textarea{
+      width:100%;padding:10px 12px;border-radius:8px;border:1px solid #d7dee9;background:transparent;font-size:14px;color:inherit;
     }
-    .wrapper{
-      width:100%;
-      max-width:var(--max-width);
-      box-shadow:0 8px 30px rgba(15,23,42,0.07);
-      border-radius:12px;
-      overflow:hidden;
-      background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(250,250,252,0.9));
-      display:grid;
-      grid-template-columns:360px 1fr;
-      gap:0;
+    .field{margin-bottom:12px}
+    .small{font-size:13px;color:var(--muted)}
+    .checkboxes{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{
+      display:inline-flex;align-items:center;padding:8px 10px;border-radius:999px;border:1px solid #d6dbe4;background:transparent;color:#0b1220;font-size:13px;cursor:pointer;
     }
-    @media (max-width:880px){
-      .wrapper{grid-template-columns:1fr; padding-bottom:18px}
-    }
-    /* Left column - controls */
-    .panel{
-      padding:20px;
-      background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(246,249,252,0.85));
-      border-right:1px solid rgba(15,23,42,0.04);
-      min-height:520px;
-    }
-    .brand{
-      display:flex;
-      gap:12px;
-      align-items:center;
-      margin-bottom:10px;
-    }
-    .logo{
-      width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#6ea8fe);
-      display:flex;align-items:center;justify-content:center;color:white;font-weight:700;
-      box-shadow:0 4px 14px rgba(15,98,254,0.15);
-      font-size:18px;
-    }
-    h1{font-size:18px;margin:0 0 6px}
-    p.lead{margin:0;color:var(--muted);font-size:13px}
-    form{margin-top:16px;display:flex;flex-direction:column;gap:12px}
-    label{font-size:13px;color:#111827;font-weight:600}
-    input[type="text"], input[type="number"], select, .checkbox-group{
-      background:var(--card);
-      border:1px solid rgba(15,23,42,0.06);
-      padding:10px 12px;border-radius:8px;font-size:14px;
-      box-shadow:inset 0 1px 0 rgba(255,255,255,0.6);
-    }
-    input[type="number"]{-moz-appearance:textfield}
-    .small{font-size:13px;color:var(--muted);margin-top:4px}
-    .row{display:flex;gap:8px}
-    .flex-1{flex:1}
-    .checkbox-group{display:flex;flex-wrap:wrap;gap:8px;padding:8px;border-radius:8px}
-    .checkbox{
-      display:flex;align-items:center;gap:8px;background:transparent;border-radius:8px;padding:6px 8px;border:1px solid transparent;
-      cursor:pointer;font-size:13px;color:var(--muted)
-    }
-    .checkbox input{accent-color:var(--accent)}
-    .hint{font-size:12px;color:var(--muted)}
-    .actions{display:flex;gap:10px;margin-top:4px}
+    .chip input{display:none}
+    .chip.selected{background:linear-gradient(90deg,rgba(31,123,214,0.1),rgba(31,123,214,0.08));border-color:rgba(31,123,214,0.32);box-shadow:0 1px 0 rgba(31,123,214,0.06)}
+    .actions{display:flex;gap:10px;align-items:center;margin-top:8px}
     button.primary{
-      background:var(--accent);color:white;padding:10px 14px;border-radius:8px;border:0;font-weight:600;cursor:pointer;
-      box-shadow:0 6px 18px rgba(15,98,254,0.12)
+      background:linear-gradient(180deg,var(--accent),#1561b8);border:0;color:white;padding:10px 14px;border-radius:8px;font-weight:600;cursor:pointer;
+      box-shadow:0 6px 16px rgba(31,123,214,0.14);min-width:170px;
     }
-    button.secondary{
-      background:transparent;border:1px solid rgba(15,23,42,0.06);padding:10px 12px;border-radius:8px;cursor:pointer;
-    }
-    button[disabled]{opacity:0.6;cursor:default}
-    .feedback{margin-top:8px;font-size:13px}
-    .error{color:var(--danger)}
-    .success{color:var(--success)}
-    /* Right column - results + hero */
-    .content{
-      padding:20px;
-      position:relative;
-      min-height:520px;
-      overflow:auto;
-    }
-    .hero{
-      display:flex;
-      gap:16px;
-      align-items:center;
-      margin-bottom:14px;
-    }
-    #defaultHeroImageArea, #destinationImageArea{
-      width:220px;height:110px;border-radius:10px;background:linear-gradient(180deg,#eef2ff,#ffffff);flex-shrink:0;
-      display:flex;align-items:center;justify-content:center;border:1px solid rgba(15,23,42,0.04);
-      position:relative;
-    }
-    #defaultHeroImageArea svg, #destinationImageArea svg{width:100%;height:100%;border-radius:10px}
-    #destinationImageArea{display:none;box-shadow:0 8px 30px rgba(15,23,42,0.06)}
-    #destinationImageArea.visible{display:block}
-    .meta{
-      flex:1;
-      min-width:0;
-    }
-    .meta h2{margin:0 0 6px;font-size:18px}
-    .meta p{margin:0;color:var(--muted);font-size:14px}
-    .controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-    .status{
-      display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:rgba(15,23,42,0.03);font-size:13px;
-    }
-    .spinner{width:16px;height:16px;border-radius:50%;border:2px solid rgba(0,0,0,0.08);border-top-color:var(--accent);animation:spin 1s linear infinite}
+    button.primary[disabled]{opacity:0.6;cursor:wait}
+    button.ghost{background:transparent;border:1px solid #cfd8e6;padding:9px 12px;border-radius:8px;color:var(--muted);cursor:pointer}
+    .note{font-size:13px;color:var(--muted);margin-top:10px}
+
+    /* Showcase */
+    .showcase{display:flex;flex-direction:column;gap:12px}
+    .image-large{height:300px;border-radius:10px;overflow:hidden;background:linear-gradient(180deg,#cfe3ff,#eaf4ff);display:flex;align-items:center;justify-content:center;border:1px solid #e6eefb}
+    .image-large img{width:100%;height:100%;object-fit:cover;display:block}
+    .images-row{display:flex;gap:12px}
+    .image-card{flex:1;height:100px;border-radius:8px;overflow:hidden;border:1px solid #e9f0fb;background:linear-gradient(180deg,#fcfeff,#f7fbff);display:flex;align-items:center;justify-content:center}
+    .img-caption{font-size:13px;color:var(--muted);text-align:center}
+
+    /* Itinerary view */
+    .itinerary{margin-top:18px}
+    .itinerary h2{margin:0 0 8px 0;font-size:16px}
+    .meta{display:flex;gap:12px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-bottom:10px}
+    .day{background:linear-gradient(180deg,#ffffff,#fbfdff);border-radius:10px;padding:12px;margin-bottom:10px;border:1px solid #eef5ff}
+    .day h3{margin:0 0 6px 0;font-size:14px}
+    .activity{display:flex;gap:12px;align-items:flex-start;padding:8px;border-radius:8px}
+    .time{min-width:84px;font-size:13px;color:var(--accent);font-weight:600}
+    .act-body{font-size:14px}
+    .muted{color:var(--muted);font-size:13px}
+    .tips{margin-top:8px;padding:12px;border-radius:8px;background:#f7fbff;border:1px solid #e6f0ff}
+    .feedback{padding:10px;border-radius:8px;font-size:14px}
+    .error{background:#fff5f5;border:1px solid #fee2e2;color:var(--danger)}
+    .success{background:#f3fff4;border:1px solid #d1f7d8;color:var(--success)}
+    .spinner{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,0.2);border-top-color:rgba(255,255,255,0.9);animation:spin 1s linear infinite;margin-right:8px}
     @keyframes spin{to{transform:rotate(360deg)}}
-    /* Itinerary */
-    .panel-card{background:var(--card);border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid rgba(15,23,42,0.04)}
-    .day{display:flex;gap:12px}
-    .day-index{
-      width:44px;height:44px;border-radius:10px;background:linear-gradient(180deg,#fff,#f3f7ff);display:flex;align-items:center;justify-content:center;font-weight:700;
-      border:1px solid rgba(15,23,42,0.04)
-    }
-    .day-body{flex:1}
-    .activity{
-      display:flex;justify-content:space-between;gap:12px;border-radius:8px;padding:10px;margin-top:8px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid rgba(15,23,42,0.03)
-    }
-    .activity h4{margin:0;font-size:14px}
-    .activity .meta{color:var(--muted);font-size:13px}
-    .tag{background:rgba(15,98,254,0.08);color:var(--accent);padding:4px 8px;border-radius:999px;font-size:12px;font-weight:600}
-    .notes{font-size:13px;color:var(--muted);margin-top:6px}
-    .tips{font-size:13px;margin-top:6px}
-    /* print-friendly */
-    @media print{
-      body{background:white}
-      .wrapper{box-shadow:none;border-radius:0}
-      .panel{display:none}
-      .controls, .status, .actions{display:none}
-      .content{padding:0}
-    }
-    footer.attribution{font-size:12px;color:var(--muted);margin-top:8px}
+
+    footer{max-width:1100px;margin:12px auto 40px;padding:12px 20px;color:var(--muted);font-size:13px}
+    a.link{color:var(--accent);text-decoration:none}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
   </style>
+
+    <style id="ai-image-showcase-style">
+      [data-original-image-area]{display:none!important;}
+      .ai-image-showcase{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin:18px 0;align-items:stretch;}
+      .ai-image-card{border:1px solid rgba(15,23,42,.12);border-radius:8px;background:#ffffff;box-shadow:0 10px 28px rgba(15,23,42,.08);overflow:hidden;min-width:0;}
+      .ai-image-label{padding:10px 12px;font-size:13px;font-weight:700;color:#334155;border-bottom:1px solid rgba(15,23,42,.10);background:#f8fafc;}
+      .ai-image-frame{min-height:260px;height:clamp(260px,32vw,380px);display:flex;align-items:center;justify-content:center;text-align:center;color:#64748b;background:#f8fbff;overflow:hidden;}
+      #aiImageShowcase #defaultHeroImageArea,#aiImageShowcase #destinationImageArea{width:100%!important;height:clamp(260px,32vw,380px)!important;min-height:260px!important;display:flex!important;align-items:center;justify-content:center;margin:0!important;border:0!important;border-radius:0!important;background:#f8fbff;overflow:hidden;}
+      .ai-image-frame img{width:100%;height:100%;object-fit:cover;display:block;}
+      .ai-image-placeholder{padding:18px;line-height:1.45;}
+      @media (max-width:850px){.ai-image-showcase{grid-template-columns:1fr}.ai-image-frame{height:260px}}
+    </style>
+    
 </head>
 <body>
-  <main class="wrapper" role="main" aria-labelledby="pageTitle">
-    <aside class="panel" aria-label="Travel form">
-      <div class="brand" aria-hidden="true">
-        <div class="logo">TP</div>
-        <div>
-          <h1 id="pageTitle">Travel Planner</h1>
-          <p class="lead">Generate concise, day-by-day itineraries.</p>
-        </div>
+  <header>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;max-width:1100px;margin:0 auto;">
+      <div>
+        <h1>Travel Planner Generator</h1>
+        <p class="lead">Generate concise day-by-day itineraries tailored to time, budget and interests.</p>
       </div>
+      <div class="sr-only" aria-hidden="true">App version 1.0</div>
+    </div>
+  </header>
+
+    <section id="aiImageShowcase" class="ai-image-showcase" aria-label="AI generated travel images">
+      <article class="ai-image-card">
+        <div class="ai-image-label">AI website image</div>
+        <div id="defaultHeroImageArea" class="ai-image-frame" aria-label="AI-generated travel planning hero image">
+          <img src="/static/images/travel_planner_hero.png" alt="AI-generated travel planning hero image" />
+        </div>
+      </article>
+      <article class="ai-image-card">
+        <div class="ai-image-label">Destination image</div>
+        <div id="destinationImageArea" class="ai-image-frame" aria-live="polite">
+          <div class="ai-image-placeholder"><strong>Destination Image</strong><br><span>Generate an itinerary to create a destination-specific AI image.</span></div>
+        </div>
+      </article>
+    </section>
+    
+
+  <main class="container" role="main">
+    <section class="card" aria-labelledby="form-title">
+      <h2 id="form-title" style="font-size:16px;margin:0 0 12px 0">Create an itinerary</h2>
 
       <form id="plannerForm" novalidate>
-        <div>
-          <label for="destination">Destination</label>
-          <input id="destination" name="destination" type="text" placeholder="City name (e.g., Lisbon)" required />
-          <div id="destinationError" class="hint error" style="display:none">Enter a destination.</div>
+        <div class="field">
+          <label for="destination">Destination (city or region) *</label>
+          <input id="destination" name="destination" type="text" placeholder="e.g., Kyoto, Japan" required aria-required="true" />
+          <div class="small" id="destHelp">Enter a city or known region. Unknown destinations are accepted but results may be generic.</div>
         </div>
 
         <div class="row">
-          <div class="flex-1">
-            <label for="days">Days</label>
-            <input id="days" name="days" type="number" min="1" value="3" required />
-            <div id="daysError" class="hint error" style="display:none">Enter at least 1 day.</div>
+          <div class="field" style="flex:1">
+            <label for="days">Days *</label>
+            <input id="days" name="days" type="number" min="1" max="30" value="3" required />
+            <div class="small">1–30 days</div>
           </div>
-          <div style="width:120px;">
-            <label for="travel_style">Travel style</label>
-            <select id="travel_style" name="travel_style" aria-label="Travel style">
-              <option value="balanced">Balanced</option>
-              <option value="relaxed">Relaxed</option>
-              <option value="active">Active</option>
-              <option value="luxury">Luxury</option>
+
+          <div class="field" style="width:170px">
+            <label for="budget">Budget *</label>
+            <select id="budget" name="budget" required>
+              <option value="medium" selected>Medium</option>
+              <option value="low">Low</option>
+              <option value="high">High</option>
             </select>
+            <div class="small">Estimated spend level</div>
           </div>
         </div>
 
-        <div>
-          <label for="budget">Budget level</label>
-          <select id="budget" name="budget">
-            <option value="low">Low</option>
-            <option value="medium" selected>Medium</option>
-            <option value="high">High</option>
+        <div class="field">
+          <label>Interests (select 1+) </label>
+          <div class="checkboxes" id="interestsList" role="list">
+            <label class="chip" data-value="museums" tabindex="0"><input type="checkbox" value="museums" />Museums</label>
+            <label class="chip" data-value="food" tabindex="0"><input type="checkbox" value="food" />Food & markets</label>
+            <label class="chip" data-value="parks" tabindex="0"><input type="checkbox" value="parks" />Parks & nature</label>
+            <label class="chip" data-value="history" tabindex="0"><input type="checkbox" value="history" />History</label>
+            <label class="chip" data-value="architecture" tabindex="0"><input type="checkbox" value="architecture" />Architecture</label>
+            <label class="chip" data-value="nightlife" tabindex="0"><input type="checkbox" value="nightlife" />Nightlife</label>
+            <label class="chip" data-value="shopping" tabindex="0"><input type="checkbox" value="shopping" />Shopping</label>
+            <label class="chip" data-value="outdoors" tabindex="0"><input type="checkbox" value="outdoors" />Outdoors</label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="style">Travel style</label>
+          <select id="travel_style" name="travel_style">
+            <option value="balanced" selected>Balanced</option>
+            <option value="relaxed">Relaxed</option>
+            <option value="active">Active / Adventurous</option>
+            <option value="luxury">Comfort / Luxury</option>
+            <option value="budget">Budget-minded</option>
           </select>
         </div>
 
-        <div>
-          <label>Interests</label>
-          <div class="checkbox-group" role="group" aria-label="Interests">
-            <label class="checkbox"><input type="checkbox" name="interests" value="culture"> Culture</label>
-            <label class="checkbox"><input type="checkbox" name="interests" value="food"> Food</label>
-            <label class="checkbox"><input type="checkbox" name="interests" value="outdoors"> Outdoors</label>
-            <label class="checkbox"><input type="checkbox" name="interests" value="museums"> Museums</label>
-            <label class="checkbox"><input type="checkbox" name="interests" value="nightlife"> Nightlife</label>
-            <label class="checkbox"><input type="checkbox" name="interests" value="shopping"> Shopping</label>
-            <label class="checkbox"><input type="checkbox" name="interests" value="family"> Family</label>
-          </div>
-          <div id="interestsError" class="hint error" style="display:none">Select at least one interest.</div>
-        </div>
-
         <div class="actions">
-          <button type="submit" id="generateBtn" class="primary">Generate Itinerary</button>
-          <button type="button" id="clearBtn" class="secondary">Clear</button>
+          <button type="submit" id="submitBtn" class="primary">Generate itinerary</button>
+          <button type="button" id="clearBtn" class="ghost">Reset</button>
+          <div id="status" style="margin-left:auto"></div>
         </div>
 
-        <div id="formFeedback" class="feedback" aria-live="polite"></div>
-
-        <div style="margin-top:12px" class="hint">
-          Results are generated from a curated dataset. For unsupported cities the API will advise alternatives.
-        </div>
-
+        <div id="formError" class="feedback error" role="alert" style="display:none;margin-top:12px"></div>
+        <div class="note">Results are suggestions. Use local opening hours and transport options when planning on the ground.</div>
       </form>
 
-      <footer class="attribution">Built for coursework — no personal data collected.</footer>
-    </aside>
+      <div id="resultContainer" class="itinerary" style="display:none">
+        <!-- populated by JS -->
+      </div>
+    </section>
 
-    <section class="content" aria-live="polite">
-      <div class="hero">
-        <div id="defaultHeroImageArea" aria-hidden="true">
-          <!-- Simple illustrative SVG cityscape (default) -->
-          <svg viewBox="0 0 640 320" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Default city illustration">
+    <aside class="showcase">
+      <div class="card" style="padding:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <strong style="font-size:14px">Image showcase</strong>
+          <span class="small">AI-style preview</span>
+        </div>
+
+        <div class="image-large" aria-hidden="false" id="defaultImage" title="Default scenic illustration">
+          <!-- Inline SVG default image -->
+          <svg width="100%" height="100%" viewBox="0 0 800 480" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Scenic illustration">
             <defs>
-              <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
-                <stop offset="0" stop-color="#e6f0ff"/>
-                <stop offset="1" stop-color="#ffffff"/>
+              <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0" stop-color="#e6f2ff"/>
+                <stop offset="1" stop-color="#f8fbff"/>
               </linearGradient>
             </defs>
-            <rect width="100%" height="100%" fill="url(#g)"/>
-            <g transform="translate(24,24)" fill="#c9daf8">
-              <rect x="40" y="120" width="40" height="120" rx="4"/>
-              <rect x="100" y="80" width="56" height="160" rx="4"/>
-              <rect x="172" y="96" width="48" height="144" rx="4"/>
-              <rect x="236" y="64" width="72" height="176" rx="6"/>
-              <rect x="320" y="104" width="40" height="136" rx="4"/>
+            <rect width="100%" height="100%" fill="url(#g1)"/>
+            <g transform="translate(40,40)">
+              <rect x="0" y="260" width="720" height="120" rx="20" fill="#cfe9ff"/>
+              <g transform="translate(40,20)">
+                <circle cx="120" cy="160" r="70" fill="#a7d2ff" opacity="0.9"/>
+                <rect x="260" y="120" width="320" height="140" rx="16" fill="#e9f6ff"/>
+                <g fill="#9fc5ff" opacity="0.9">
+                  <path d="M40 180q40-80 120-80t120 80" />
+                </g>
+                <text x="30" y="36" font-size="24" fill="#0b2540" font-weight="600">Travel preview</text>
+                <text x="30" y="64" font-size="14" fill="#0f1724" opacity="0.7">Generate a destination preview after creating an itinerary</text>
+              </g>
             </g>
-            <text x="48" y="280" font-size="16" fill="#6b7280" font-family="sans-serif">Travel Planner</text>
           </svg>
         </div>
 
-        <div id="destinationImageArea" aria-hidden="true"></div>
-
-        <div class="meta">
-          <h2 id="resultTitle">Your itinerary will appear here</h2>
-          <p id="resultOverview" class="lead">Enter trip details and click Generate.</p>
-
-          <div class="controls" id="resultControls" style="display:none">
-            <div class="status" id="statusBox" style="display:none"><span class="spinner" id="statusSpinner" style="display:none"></span><span id="statusText"></span></div>
-            <button class="secondary" id="copyJsonBtn" title="Copy itinerary JSON">Copy JSON</button>
-            <button class="secondary" id="downloadBtn" title="Download JSON">Download</button>
-            <button class="secondary" id="printBtn" title="Print itinerary">Print</button>
+        <div class="images-row" style="margin-top:12px">
+          <div class="image-card" id="destImageCard" style="display:none">
+            <img id="destImage" alt="Destination preview" />
+          </div>
+          <div class="image-card" id="aiCard">
+            <div style="padding:10px;text-align:center">
+              <div style="font-weight:600">AI imagery</div>
+              <div class="img-caption">Default illustration remains visible</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div id="resultsArea" aria-live="polite">
-        <!-- Generated content inserted here -->
+      <div class="card">
+        <strong style="display:block;margin-bottom:6px">Quick tips</strong>
+        <ol style="margin:0 0 0 18px;padding:0;color:var(--muted);font-size:14px">
+          <li>Provide 1–3 core interests for best results.</li>
+          <li>Use conservative travel time estimates when booking.</li>
+          <li>Review local opening hours and reservations for attractions.</li>
+        </ol>
       </div>
-
-    </section>
+    </aside>
   </main>
+
+  <footer>
+    <div style="max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;gap:12px;align-items:center">
+      <div>Built for coursework — itinerary generator with Flask backend. Data stored server-side.</div>
+      <div><a class="link" href="/api/health">API health</a></div>
+    </div>
+  </footer>
 
   <script>
     (function(){
+      // Utilities
+      function el(id){return document.getElementById(id)}
+      function q(selector, root=document){return root.querySelector(selector)}
+      function qAll(selector, root=document){return Array.from(root.querySelectorAll(selector))}
+      function show(node){node.style.display='block'}
+      function hide(node){node.style.display='none'}
+      function setText(node, text){node.textContent = text}
+      function getCookie(name){
+        const m = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)')
+        return m ? m.pop() : ''
+      }
       // Elements
-      const form = document.getElementById('plannerForm');
-      const destinationInput = document.getElementById('destination');
-      const daysInput = document.getElementById('days');
-      const budgetInput = document.getElementById('budget');
-      const travelStyleInput = document.getElementById('travel_style');
-      const interestsInputs = Array.from(document.querySelectorAll('input[name="interests"]'));
-      const generateBtn = document.getElementById('generateBtn');
-      const clearBtn = document.getElementById('clearBtn');
-      const formFeedback = document.getElementById('formFeedback');
+      const form = el('plannerForm')
+      const submitBtn = el('submitBtn')
+      const clearBtn = el('clearBtn')
+      const status = el('status')
+      const resultContainer = el('resultContainer')
+      const formError = el('formError')
+      const destImageCard = el('destImageCard')
+      const destImage = el('destImage')
 
-      const resultTitle = document.getElementById('resultTitle');
-      const resultOverview = document.getElementById('resultOverview');
-      const resultsArea = document.getElementById('resultsArea');
-      const destinationImageArea = document.getElementById('destinationImageArea');
-      const defaultHero = document.getElementById('defaultHeroImageArea');
+      // Interest chips behaviour
+      qAll('.chip').forEach(chip=>{
+        chip.addEventListener('click', () => toggleChip(chip))
+        chip.addEventListener('keydown', (e)=>{ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); toggleChip(chip)} })
+      })
+      function toggleChip(chip){
+        const input = chip.querySelector('input')
+        const checked = !input.checked
+        input.checked = checked
+        chip.classList.toggle('selected', checked)
+      }
 
-      const resultControls = document.getElementById('resultControls');
-      const statusBox = document.getElementById('statusBox');
-      const statusText = document.getElementById('statusText');
-      const statusSpinner = document.getElementById('statusSpinner');
-      const copyJsonBtn = document.getElementById('copyJsonBtn');
-      const downloadBtn = document.getElementById('downloadBtn');
-      const printBtn = document.getElementById('printBtn');
+      // Form validation
+      function validateInputs(data){
+        const errors = []
+        if(!data.destination || !data.destination.trim()) errors.push('Destination is required.')
+        if(!Number.isInteger(data.days) || data.days < 1 || data.days > 30) errors.push('Days must be an integer between 1 and 30.')
+        if(!['low','medium','high'].includes(data.budget)) errors.push('Budget must be one of: low, medium or high.')
+        // interests allowed empty, but warn
+        return errors
+      }
 
-      const destError = document.getElementById('destinationError');
-      const daysError = document.getElementById('daysError');
-      const interestsError = document.getElementById('interestsError');
+      function buildPayload(){
+        const destination = el('destination').value.trim()
+        const days = parseInt(el('days').value,10)
+        const budget = el('budget').value
+        const travel_style = el('travel_style').value
+        const interests = qAll('#interestsList input:checked').map(i=>i.value)
+        return { destination, days, budget, interests, travel_style }
+      }
 
-      let latestItinerary = null;
-
-      function setStatus({loading=false, success=false, error=false, message=''}) {
-        if (loading) {
-          statusBox.style.display='inline-flex';
-          statusSpinner.style.display='inline-block';
-          statusText.textContent = message || 'Generating...';
-        } else if (success) {
-          statusBox.style.display='inline-flex';
-          statusSpinner.style.display='none';
-          statusText.textContent = message || 'Ready';
-        } else if (error) {
-          statusBox.style.display='inline-flex';
-          statusSpinner.style.display='none';
-          statusText.textContent = message || 'Error';
+      function setLoading(on, label){
+        if(on){
+          submitBtn.disabled = true
+          submitBtn.innerHTML = '<span class="spinner" aria-hidden="true"></span>' + (label || 'Generating...')
         } else {
-          statusBox.style.display='none';
+          submitBtn.disabled = false
+          submitBtn.innerHTML = 'Generate itinerary'
         }
       }
 
-      function validate() {
-        let ok = true;
-        const dest = destinationInput.value.trim();
-        const days = Number(daysInput.value);
-        const interests = interestsInputs.filter(i=>i.checked).map(i=>i.value);
-
-        if (!dest) { destError.style.display='block'; ok=false } else destError.style.display='none';
-        if (!Number.isInteger(days) || days < 1) { daysError.style.display='block'; ok=false } else daysError.style.display='none';
-        if (interests.length === 0) { interestsError.style.display='block'; ok=false } else interestsError.style.display='none';
-
-        return ok;
+      function showError(msg){
+        formError.style.display = 'block'
+        formError.textContent = msg
       }
 
-      function buildPayload() {
-        return {
-          destination: destinationInput.value.trim(),
-          days: Number(daysInput.value),
-          budget: budgetInput.value,
-          interests: interestsInputs.filter(i=>i.checked).map(i=>i.value),
-          travel_style: travelStyleInput.value
-        };
+      function clearError(){
+        formError.style.display = 'none'
+        formError.textContent = ''
       }
 
-      function renderDestinationImage(name) {
-        const safeName = String(name || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        const svg = `
-<svg viewBox="0 0 640 320" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Destination image">
-  <defs>
-    <linearGradient id="d1" x1="0" x2="1">
-      <stop offset="0" stop-color="#fff"/>
-      <stop offset="1" stop-color="#eef7ff"/>
-    </linearGradient>
-  </defs>
-  <rect width="100%" height="100%" fill="url(#d1)"/>
-  <g transform="translate(24,24)">
-    <rect x="6" y="120" width="52" height="120" rx="6" fill="#cfe3ff"/>
-    <rect x="78" y="64" width="70" height="176" rx="6" fill="#b6d2ff"/>
-    <rect x="160" y="88" width="60" height="152" rx="6" fill="#9fc0ff"/>
-    <rect x="238" y="48" width="92" height="192" rx="8" fill="#8bb3ff"/>
-    <rect x="340" y="104" width="36" height="136" rx="6" fill="#6ea8fe"/>
-  </g>
-  <rect x="0" y="0" width="100%" height="100%" fill="transparent"/>
-  <text x="50%" y="70%" text-anchor="middle" font-family="sans-serif" font-size="20" fill="#0f1724">${safeName}</text>
-</svg>`;
-        destinationImageArea.innerHTML = svg;
-        destinationImageArea.classList.add('visible');
-        destinationImageArea.setAttribute('aria-hidden','false');
+      function generateDestinationSVG(name, days, interests){
+        // Create a simple scenic SVG with destination text
+        const safeName = name.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        const interestText = (interests && interests.length) ? interests.join(', ') : 'General'
+        const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='700' viewBox='0 0 1200 700'>
+          <defs>
+            <linearGradient id='g' x1='0' x2='1'>
+              <stop offset='0' stop-color='#97c1ff'/>
+              <stop offset='1' stop-color='#cfe8ff'/>
+            </linearGradient>
+          </defs>
+          <rect width='100%' height='100%' fill='url(#g)'/>
+          <g transform='translate(60,60)'>
+            <rect x='0' y='420' width='1080' height='180' rx='20' fill='#dff0ff' opacity='0.95'/>
+            <g transform='translate(30,30)'>
+              <circle cx='120' cy='220' r='110' fill='#ffffff' opacity='0.12'/>
+              <path d='M220 200 q110 -160 280 0' fill='#ffffff' opacity='0.06'/>
+              <text x='260' y='80' font-size='46' fill='#07203a' font-weight='700'>${safeName}</text>
+              <text x='260' y='128' font-size='18' fill='#07203a' opacity='0.9'>${days} day(s) • ${interestText}</text>
+              <text x='260' y='170' font-size='14' fill='#07203a' opacity='0.7'>Personalised itinerary preview</text>
+            </g>
+          </g>
+        </svg>`
+        const encoded = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)))
+        return encoded
       }
 
-      function renderItinerary(data) {
-        resultsArea.innerHTML = '';
+      function showResult(data){
+        // Build result HTML concisely
+        resultContainer.innerHTML = ''
+        resultContainer.style.display = 'block'
         // Header
-        resultTitle.textContent = data.destination || 'Itinerary';
-        resultOverview.textContent = data.overview || 'Overview not available.';
-        resultControls.style.display = 'flex';
-        setStatus({success:true, message:'Itinerary generated'});
+        const header = document.createElement('div')
+        const title = document.createElement('h2')
+        title.textContent = data.destination || 'Itinerary'
+        header.appendChild(title)
+        const meta = document.createElement('div')
+        meta.className = 'meta'
+        meta.innerHTML = `<div class="muted">Days: ${data.days || ''}</div>
+                          <div class="muted">Budget: ${data.budget || ''}</div>
+                          <div class="muted">Style: ${data.travel_style || ''}</div>`
+        header.appendChild(meta)
+        resultContainer.appendChild(header)
 
-        // Budget notes (presented concisely)
-        const budgetNotes = data.budget_notes || (data.budget ? `Planned for ${data.budget} budget.` : '');
-        if (budgetNotes) {
-          const bn = document.createElement('div');
-          bn.className = 'panel-card notes';
-          bn.innerHTML = `<strong>Budget notes:</strong> <span style="color:var(--muted)">${escapeHtml(budgetNotes)}</span>`;
-          resultsArea.appendChild(bn);
+        // Overview
+        if(data.overview){
+          const ov = document.createElement('div')
+          ov.className = 'card'
+          ov.style.marginTop='10px'
+          ov.style.padding='12px'
+          ov.innerHTML = `<div class="muted" style="margin-bottom:6px"><strong>Overview</strong></div>
+                          <div style="font-size:14px;color:#0b1220">${escapeHtml(data.overview)}</div>`
+          resultContainer.appendChild(ov)
         }
 
         // Itinerary days
-        if (Array.isArray(data.itinerary) && data.itinerary.length) {
-          data.itinerary.forEach((day, idx) => {
-            const card = document.createElement('div');
-            card.className = 'panel-card';
-            const dayIndex = document.createElement('div');
-            dayIndex.className = 'day-index';
-            dayIndex.textContent = `Day ${idx+1}`;
+        if(Array.isArray(data.itinerary) && data.itinerary.length){
+          data.itinerary.forEach((day, idx)=>{
+            const dayCard = document.createElement('div')
+            dayCard.className = 'day'
+            const h = document.createElement('h3')
+            h.textContent = 'Day ' + (idx+1) + (day.title ? ' — ' + day.title : '')
+            dayCard.appendChild(h)
 
-            const dayBody = document.createElement('div');
-            dayBody.className = 'day-body';
-
-            // Day heading
-            const heading = document.createElement('div');
-            heading.style.display='flex';
-            heading.style.justifyContent='space-between';
-            heading.style.alignItems='center';
-            const hLeft = document.createElement('div');
-            hLeft.innerHTML = `<strong>${escapeHtml(day.title || ('Day '+(idx+1)))}</strong>`;
-            const hRight = document.createElement('div');
-            if (day.estimated_cost || day.cost_estimate) {
-              hRight.innerHTML = `<span class="tag">${escapeHtml(String(day.estimated_cost || day.cost_estimate))}</span>`;
-            }
-            heading.appendChild(hLeft); heading.appendChild(hRight);
-            dayBody.appendChild(heading);
-
-            // If day.activities array present
-            if (Array.isArray(day.activities) && day.activities.length) {
+            // If day has activities array
+            if(Array.isArray(day.activities) && day.activities.length){
               day.activities.forEach(act=>{
-                const a = document.createElement('div'); a.className='activity';
-                const left = document.createElement('div');
-                left.innerHTML = `<h4>${escapeHtml(act.title || act.name || 'Activity')}</h4><div class="meta">${escapeHtml(act.description || act.summary || '')}</div>`;
-                const right = document.createElement('div'); right.style.textAlign='right';
-                right.innerHTML = `<div class="meta">${escapeHtml(act.time || act.time_of_day || '')}</div><div class="meta">${escapeHtml(act.duration || act.estimated_duration || '')}</div><div style="margin-top:6px"><span class="tag">${escapeHtml(act.cost_tier || act.price || '')}</span></div>`;
-                a.appendChild(left); a.appendChild(right);
-                dayBody.appendChild(a);
-              });
+                dayCard.appendChild(renderActivity(act))
+              })
             } else {
-              // morning/afternoon/evening
-              ['morning','afternoon','evening'].forEach(period=>{
-                if (day[period]) {
-                  const a = document.createElement('div'); a.className='activity';
-                  const left = document.createElement('div');
-                  left.innerHTML = `<h4>${capitalize(period)}</h4><div class="meta">${escapeHtml(day[period])}</div>`;
-                  const right = document.createElement('div'); right.style.textAlign='right';
-                  a.appendChild(left); a.appendChild(right);
-                  dayBody.appendChild(a);
+              // fallback to morning/afternoon/evening
+              ['morning','afternoon','evening'].forEach(slot=>{
+                if(day[slot]){
+                  const act = {
+                    time: slot.charAt(0).toUpperCase() + slot.slice(1),
+                    name: day[slot].name || day[slot].title || day[slot],
+                    duration: day[slot].duration || '',
+                    description: day[slot].description || ''
+                  }
+                  dayCard.appendChild(renderActivity(act))
                 }
-              });
+              })
             }
-
-            // local notes
-            if (day.notes) {
-              const notes = document.createElement('div'); notes.className='notes';
-              notes.textContent = day.notes;
-              dayBody.appendChild(notes);
+            resultContainer.appendChild(dayCard)
+          })
+        } else if (data.itinerary && typeof data.itinerary === 'object') {
+          // If itinerary is an object keyed by day numbers
+          const keys = Object.keys(data.itinerary).sort()
+          keys.forEach((k, idx)=>{
+            const day = data.itinerary[k]
+            const dayCard = document.createElement('div')
+            dayCard.className = 'day'
+            const h = document.createElement('h3')
+            h.textContent = k
+            dayCard.appendChild(h)
+            if(Array.isArray(day.activities)) {
+              day.activities.forEach(act => dayCard.appendChild(renderActivity(act)))
+            } else {
+              ['morning','afternoon','evening'].forEach(slot=>{
+                if(day[slot]) {
+                  const act = {
+                    time: slot.charAt(0).toUpperCase() + slot.slice(1),
+                    name: day[slot].name || day[slot].title || day[slot],
+                    duration: day[slot].duration || '',
+                    description: day[slot].description || ''
+                  }
+                  dayCard.appendChild(renderActivity(act))
+                }
+              })
             }
-
-            card.appendChild(dayIndex);
-            card.appendChild(dayBody);
-            card.style.display='flex';
-            card.style.alignItems='flex-start';
-            resultsArea.appendChild(card);
-          });
+            resultContainer.appendChild(dayCard)
+          })
         } else {
-          const none = document.createElement('div');
-          none.className='panel-card';
-          none.textContent = 'No itinerary details provided by the service.';
-          resultsArea.appendChild(none);
+          const warn = document.createElement('div')
+          warn.className = 'feedback error'
+          warn.textContent = 'No itinerary details returned.'
+          resultContainer.appendChild(warn)
         }
 
-        // Tips
-        if (data.tips) {
-          const t = document.createElement('div'); t.className='panel-card tips';
-          t.innerHTML = `<strong>Tips:</strong><ul style="margin:8px 0 0 18px;color:var(--muted)">${(Array.isArray(data.tips)?data.tips: [data.tips]).map(i=>`<li>${escapeHtml(i)}</li>`).join('')}</ul>`;
-          resultsArea.appendChild(t);
-        }
-
-        latestItinerary = data;
-
-        // Render destination image
-        renderDestinationImage(data.destination || 'Destination');
-
-        // Reveal controls
-        resultControls.style.display='flex';
-      }
-
-      function escapeHtml(s){
-        if (s==null) return '';
-        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      }
-
-      function capitalize(s){ return String(s).charAt(0).toUpperCase() + String(s).slice(1) }
-
-      form.addEventListener('submit', async function(e){
-        e.preventDefault();
-        formFeedback.textContent = '';
-        if (!validate()) {
-          formFeedback.innerHTML = '<span class="error">Fix the fields above.</span>';
-          return;
-        }
-        const payload = buildPayload();
-        // UI update
-        generateBtn.disabled = true;
-        clearBtn.disabled = true;
-        setStatus({loading:true, message:'Generating itinerary…'});
-        resultControls.style.display='flex';
-        try {
-          const resp = await fetch('/api/itinerary', {
-            method:'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify(payload)
-          });
-          const text = await resp.text();
-          let data;
-          try { data = JSON.parse(text) } catch(e){
-            throw new Error('Invalid JSON response from server.');
+        // Budget notes and tips
+        if(data.budget_notes || data.tips){
+          const box = document.createElement('div')
+          box.style.marginTop='12px'
+          if(data.budget_notes){
+            const bn = document.createElement('div')
+            bn.className='tips'
+            bn.innerHTML = `<strong>Budget notes</strong><div class="muted" style="margin-top:6px">${escapeHtml(data.budget_notes)}</div>`
+            box.appendChild(bn)
           }
-          if (!resp.ok) {
-            const msg = data && (data.error||data.message) ? (data.error||data.message) : `Server returned ${resp.status}`;
-            throw new Error(msg);
+          if(Array.isArray(data.tips) && data.tips.length){
+            const t = document.createElement('div')
+            t.className='tips'
+            t.style.marginTop='8px'
+            t.innerHTML = `<strong>Practical tips</strong><ol style="margin:8px 0 0 18px; color:var(--muted)">${data.tips.map(s=>'<li>'+escapeHtml(s)+'</li>').join('')}</ol>`
+            box.appendChild(t)
           }
-          // Success
-          renderItinerary(data);
-          formFeedback.innerHTML = '<span class="success">Itinerary generated successfully.</span>';
-        } catch(err){
-          console.error('Itinerary generation failed:', err);
-          setStatus({error:true, message:'Generation failed'});
-          formFeedback.innerHTML = `<span class="error">Error: ${escapeHtml(err.message || 'Request failed')}</span>`;
-        } finally {
-          generateBtn.disabled = false;
-          clearBtn.disabled = false;
-          statusSpinner.style.display='none';
+          resultContainer.appendChild(box)
         }
-      });
 
-      clearBtn.addEventListener('click', function(){
-        form.reset();
-        interestsInputs.forEach(i=>i.checked=false);
-        destinationImageArea.classList.remove('visible');
-        destinationImageArea.innerHTML = '';
-        resultTitle.textContent = 'Your itinerary will appear here';
-        resultOverview.textContent = 'Enter trip details and click Generate.';
-        resultsArea.innerHTML = '';
-        resultControls.style.display='none';
-        setStatus({loading:false});
-        formFeedback.textContent = '';
-        latestItinerary = null;
-      });
+        // Share link if id present
+        if(data.id){
+          const share = document.createElement('div')
+          share.style.marginTop='10px'
+          share.innerHTML = `<div class="muted">Shareable link:</div>
+            <div style="margin-top:6px"><a class="link" href="/itineraries/${encodeURIComponent(data.id)}" target="_blank" rel="noopener">/itineraries/${encodeURIComponent(data.id)}</a></div>`
+          resultContainer.appendChild(share)
+        }
 
-      copyJsonBtn.addEventListener('click', async function(){
-        if (!latestItinerary) return;
+        // Post-generation image preview
         try {
-          await navigator.clipboard.writeText(JSON.stringify(latestItinerary, null, 2));
-          formFeedback.innerHTML = '<span class="success">Itinerary JSON copied to clipboard.</span>';
+          const svgData = generateDestinationSVG(data.destination || 'Destination', data.days || 0, data.interests || [])
+          destImage.src = svgData
+          destImage.alt = (data.destination || 'Destination') + ' preview'
+          destImageCard.style.display = 'block'
         } catch(e){
-          formFeedback.innerHTML = '<span class="error">Unable to copy to clipboard.</span>';
+          // ignore image errors
+          destImageCard.style.display = 'none'
         }
-      });
+      }
 
-      downloadBtn.addEventListener('click', function(){
-        if (!latestItinerary) return;
-        const blob = new Blob([JSON.stringify(latestItinerary, null, 2)], {type:'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        const fileName = `${(latestItinerary.destination||'itinerary').replace(/\s+/g,'_')}_itinerary.json`;
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      });
+      function escapeHtml(text){
+        if(!text) return ''
+        return text.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
+      }
 
-      printBtn.addEventListener('click', function(){ window.print() });
+      function renderActivity(act){
+        const wrap = document.createElement('div')
+        wrap.className = 'activity'
+        const time = document.createElement('div')
+        time.className = 'time'
+        time.textContent = act.time || (act.start || '') + (act.duration ? ' • ' + act.duration : '')
+        const body = document.createElement('div')
+        body.className = 'act-body'
+        const name = document.createElement('div')
+        name.style.fontWeight='600'
+        name.textContent = act.name || act.title || 'Activity'
+        const desc = document.createElement('div')
+        desc.className='muted'
+        if(act.description) desc.textContent = act.description
+        else if(act.location) desc.textContent = act.location
+        else desc.textContent = ''
+        body.appendChild(name)
+        if(desc.textContent) body.appendChild(desc)
+        wrap.appendChild(time)
+        wrap.appendChild(body)
+        return wrap
+      }
 
-      // Provide minimal keyboard accessibility for checkboxes
-      document.querySelectorAll('.checkbox').forEach(label=>{
-        label.addEventListener('keydown', (e)=>{
-          if (e.key === ' ' || e.key === 'Enter') {
-            e.preventDefault();
-            const cb = label.querySelector('input[type="checkbox"]');
-            cb.checked = !cb.checked;
-            cb.dispatchEvent(new Event('change'));
+      // Submit handler
+      form.addEventListener('submit', function(e){
+        e.preventDefault()
+        clearError()
+        resultContainer.style.display='none'
+        destImageCard.style.display='none'
+
+        const payload = buildPayload()
+        const errors = validateInputs(payload)
+        if(errors.length){
+          showError(errors.join(' '))
+          return
+        }
+
+        setLoading(true)
+        status.innerHTML = ''
+
+        // Prepare headers and CSRF if present
+        const headers = {'Content-Type':'application/json'}
+        const csrf = getCookie('csrf_token') || getCookie('csrf')
+        if(csrf) headers['X-CSRFToken'] = csrf
+
+        fetch('/api/itinerary', {
+          method:'POST',
+          headers,
+          body: JSON.stringify(payload),
+          credentials: 'same-origin'
+        }).then(async res=>{
+          setLoading(false)
+          if(!res.ok){
+            const errText = await parseError(res)
+            showError('Server error: ' + errText)
+            status.innerHTML = `<div class="error feedback" role="status">Failed to generate itinerary</div>`
+            return
           }
-        });
-        label.setAttribute('tabindex','0');
-      });
+          const data = await res.json()
+          status.innerHTML = `<div class="success feedback" role="status">Itinerary generated</div>`
+          showResult(data)
+        }).catch(err=>{
+          setLoading(false)
+          showError('Network error. Check connection and try again.')
+          status.innerHTML = `<div class="error feedback" role="status">Network error</div>`
+          console.error(err)
+        })
+      })
 
-      // Prefill some helpful example on first load (non-intrusive)
-      (function prefill(){
-        destinationInput.placeholder = 'e.g., Kyoto, Lisbon, Vancouver';
-      })();
+      clearBtn.addEventListener('click', ()=>{
+        form.reset()
+        qAll('#interestsList input').forEach(i=>i.checked=false)
+        qAll('.chip').forEach(c=>c.classList.remove('selected'))
+        clearError()
+        resultContainer.style.display='none'
+        destImageCard.style.display='none'
+      })
 
+      async function parseError(res){
+        try{
+          const json = await res.json()
+          if(json && json.error) return json.error
+          if(json && json.message) return json.message
+        }catch(e){}
+        return res.status + ' ' + res.statusText
+      }
+
+      // Accessibility: press Enter on default submit when focused on chips container
+      document.addEventListener('keydown', (e)=>{
+        if(e.key==='Escape'){
+          form.reset()
+        }
+      })
+
+      // Minimal client-side initialization complete
     })();
   </script>
 <script id="generated-image-integration">
 (function(){
   const safeText = (value) => String(value || '').replace(/[&<>"']/g, (char) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
-  function baseImageStyle(){
-    return 'min-height:220px;border:1px dashed #d6dee8;border-radius:8px;display:flex;align-items:center;justify-content:center;text-align:center;margin:12px 0;overflow:hidden;color:#64748b;background:#f8fbff;';
+  function ensureShowcase(){
+    let showcase = document.getElementById('aiImageShowcase');
+    if(!showcase){
+      showcase = document.createElement('section');
+      showcase.id = 'aiImageShowcase';
+      showcase.className = 'ai-image-showcase';
+      showcase.setAttribute('aria-label', 'AI generated travel images');
+      const target = document.querySelector('main, .container, body');
+      target.prepend(showcase);
+    }
+    return showcase;
   }
 
-  function findLayoutTarget(){
-    return document.querySelector('main, .results, .container, body');
+  function createCard(label, areaId, innerHtml){
+    const card = document.createElement('article');
+    card.className = 'ai-image-card';
+    card.innerHTML = `<div class="ai-image-label">${label}</div><div id="${areaId}" class="ai-image-frame" aria-live="polite">${innerHtml}</div>`;
+    return card;
   }
 
   function ensureDefaultHeroArea(){
     let area = document.getElementById('defaultHeroImageArea');
     if(!area){
-      area = document.createElement('div');
-      area.id = 'defaultHeroImageArea';
-      area.style.cssText = baseImageStyle();
-      const target = findLayoutTarget();
-      target.prepend(area);
+      ensureShowcase().prepend(createCard('AI website image', 'defaultHeroImageArea', ''));
+      area = document.getElementById('defaultHeroImageArea');
     }
     return area;
   }
@@ -612,11 +620,8 @@
   function ensureDestinationImageArea(){
     let area = document.getElementById('destinationImageArea');
     if(!area){
-      area = document.createElement('div');
-      area.id = 'destinationImageArea';
-      area.style.cssText = baseImageStyle();
-      const hero = ensureDefaultHeroArea();
-      hero.insertAdjacentElement('afterend', area);
+      ensureShowcase().appendChild(createCard('Destination image', 'destinationImageArea', '<div class="ai-image-placeholder"><strong>Destination Image</strong><br><span>Generate an itinerary to create a destination-specific AI image.</span></div>'));
+      area = document.getElementById('destinationImageArea');
     }
     return area;
   }
@@ -626,20 +631,20 @@
     const defaultImageUrl = '/static/images/travel_planner_hero.png';
     const probe = new Image();
     probe.onload = function(){
-      area.innerHTML = `<img src="${defaultImageUrl}?t=${Date.now()}" alt="AI-generated travel planning hero image" style="width:100%;height:100%;min-height:220px;object-fit:cover;display:block;border-radius:8px;" />`;
+      area.innerHTML = `<img src="${defaultImageUrl}?t=${Date.now()}" alt="AI-generated travel planning hero image" />`;
     };
     probe.onerror = function(){
-      if(!area.textContent.trim()){
-        area.innerHTML = '<div><strong>Travel Planner</strong><br><span>Default AI website image will appear here.</span></div>';
-      }
+      area.innerHTML = '<div class="ai-image-placeholder"><strong>Travel Planner</strong><br><span>Default AI website image will appear here.</span></div>';
     };
     probe.src = defaultImageUrl;
-    ensureDestinationImageArea().innerHTML = '<div><strong>Destination Image</strong><br><span>Generate an itinerary to create a destination-specific AI image.</span></div>';
+    if(!ensureDestinationImageArea().querySelector('img')){
+      ensureDestinationImageArea().innerHTML = '<div class="ai-image-placeholder"><strong>Destination Image</strong><br><span>Generate an itinerary to create a destination-specific AI image.</span></div>';
+    }
   }
 
   async function generateDestinationImage(payload){
     const area = ensureDestinationImageArea();
-    area.innerHTML = `<div><strong>${safeText(payload.destination || 'Destination')}</strong><br><span>Generating AI image...</span></div>`;
+    area.innerHTML = `<div class="ai-image-placeholder"><strong>${safeText(payload.destination || 'Destination')}</strong><br><span>Generating AI image...</span></div>`;
     try{
       const response = await fetch('/api/destination-image', {
         method: 'POST',
@@ -648,10 +653,10 @@
       });
       const imageData = await response.json();
       if(!response.ok){ throw new Error(imageData.details || imageData.error || 'Image generation failed'); }
-      area.innerHTML = `<img src="${imageData.image_url}?t=${Date.now()}" alt="AI-generated image for ${safeText(payload.destination)}" style="width:100%;height:100%;min-height:220px;object-fit:cover;display:block;border-radius:8px;" />`;
+      area.innerHTML = `<img src="${imageData.image_url}?t=${Date.now()}" alt="AI-generated image for ${safeText(payload.destination)}" />`;
     }catch(error){
       console.error('Destination image generation failed:', error);
-      area.innerHTML = `<div><strong>${safeText(payload.destination || 'Destination')}</strong><br><span>Image generation unavailable</span></div>`;
+      area.innerHTML = `<div class="ai-image-placeholder"><strong>${safeText(payload.destination || 'Destination')}</strong><br><span>Image generation unavailable</span></div>`;
     }
   }
 

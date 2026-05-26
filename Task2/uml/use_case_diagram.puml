@@ -1,40 +1,39 @@
 @startuml
 left to right direction
-skinparam usecase {
-  BackgroundColor #FEF9E7
-  BorderColor #2E86C1
-}
 
 actor Tourist
-actor "Travel Agency Assistant" as Agent
+actor "Travel Agency Assistant" as Assistant
 
 rectangle "Travel Planner Generator" {
-  usecase UC_Preferences as "Enter Preferences\n(destination, trip length,\nbudget level, interests)"
-  usecase UC_Generate as "Generate Itinerary\n(day-by-day plan)"
-  usecase UC_View as "View Website\n(responsive itinerary UI)"
-  usecase UC_Image as "Request Destination Image"
-  usecase UC_API as "Access API\n(POST /api/itineraries,\nGET /api/itineraries/{id})"
+  usecase "Enter Preferences\n(destination, trip length,\nbudget, interests)" as Enter
+  usecase "Generate Itinerary" as Generate
+  usecase "View Website" as View
+  usecase "Request Destination Image" as Image
+  usecase "Access API\n(POST/GET endpoints)" as API
+  usecase "Retrieve Saved Itinerary" as Retrieve
+  usecase "Seed / Manage POI Data" as Admin
 }
 
-' Primary associations
-Tourist --> UC_Preferences
-Tourist --> UC_View
-Tourist --> UC_Image
-Tourist --> UC_API
+' Actor associations
+Tourist --> View
+Tourist --> Enter
+Tourist --> Image
+Tourist --> API
+Tourist --> Retrieve
 
-Agent --> UC_Preferences
-Agent --> UC_Generate
-Agent --> UC_View
-Agent --> UC_API
-Agent --> UC_Image
+Assistant --> Admin
+Assistant --> API
+Assistant --> Generate
+Assistant --> Retrieve
 
-' Use-case relationships
-UC_Preferences ..> UC_Generate : <<include>>
-UC_API ..> UC_Generate : <<include>>
-UC_View ..> UC_Image : <<include>>
+' Use case relationships
+View --> Enter : <<include>>
+View --> Retrieve : <<include>>
+View --> Image : <<include>>
 
-' Optional relationships to show alternate flows
-UC_Generate .> UC_View : result shown on
-UC_Generate .> UC_API : can be triggered via
+Enter --> Generate : <<include>>
+API --> Generate : <<include>>
+API --> Retrieve : <<include>>
+Generate --> Retrieve : <<include>>
 
 @enduml

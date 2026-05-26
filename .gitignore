@@ -5,3 +5,4 @@ __pycache__/
 *.pyc
 Task2/app/generated_images/
 data.db
+itineraries.db
