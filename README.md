@@ -8,8 +8,6 @@ The selected business problem is a travel planner website. Users enter a destina
 
 The website uses two AI-generated images. First, the notebook generates a default travel-planner website image and saves it into the generated website assets. This image is visible when the website first loads. Second, after the user submits a destination, the website calls the generated Flask API to create a destination-specific AI image based on the user's input.
 
-The notebook also includes a lightweight generated code review agent. After the AI-generated API and website are created, the agent uses stabilisation tools to improve the generated app, checks that the expected API endpoints, website image areas, documentation, UML files, tests, and deployment files exist, then saves a review report in `Task2/docs/code_review_agent_report.md`.
-
 ## Structure
 
 ```text
@@ -47,7 +45,7 @@ The coursework conda environment file is included at:
 Task1/ai_in_se_cw.yml
 ```
 
-An APIFree API key should be provided as `APIFREE_API_KEY` in the submitted `.env` file or as an environment variable. Internet access is required for APIFree generation and PlantUML rendering. If the selected APIFree image model returns a completed response without image data, use `stable-diffusion-xl` for `APIFREE_IMAGE_MODEL`, because it follows the standard APIFree image result schema.
+An APIFree API key should be provided as `APIFREE_API_KEY` in the submitted `.env` file or as an environment variable. Internet access is required for APIFree generation and PlantUML rendering.
 
 The submitted `.env` file should use this format:
 
@@ -55,7 +53,7 @@ The submitted `.env` file should use this format:
 APIFREE_API_KEY=your_key_here
 APIFREE_BASE_URL=https://api.apifree.ai/v1
 APIFREE_MODEL=gpt-5-mini
-APIFREE_IMAGE_MODEL=stable-diffusion-xl
+APIFREE_IMAGE_MODEL=google/nano-banana-2
 ```
 
 ## Run Task1 Notebook
@@ -66,27 +64,9 @@ Open and run:
 Task1/travel_planner_generator.ipynb
 ```
 
-The notebook generates the Task2 artefacts, including documentation, UML diagrams, Flask API code, website code, tests, CI workflow configuration, a generated code review agent report, Docker deployment files, and a default AI-generated website image.
+The notebook generates the Task2 artefacts, including documentation, UML diagrams, Flask API code, website code, tests, CI workflow configuration, Docker deployment files, and a default AI-generated website image.
 
 The recommended layout is to run the notebook from `Task1`. If the notebook is run from a standalone folder, it will use the current working directory as the project root and create a `Task2` folder there.
-
-## Generated Code Review Agent
-
-The notebook contains a lightweight review-and-stabilise agent. It runs after the AI-generated tests and CI workflow are created, and before Docker deployment files are produced.
-
-The agent uses deterministic stabilisation tools to:
-
-- ensure the Flask home route serves the generated `index.html`;
-- ensure the frontend can render object-based itinerary activities correctly;
-- ensure the destination image API and generated image route are available;
-- ensure the frontend contains a stable default image and destination image showcase;
-- verify the expected documentation, UML, tests, API, website, and deployment artefacts.
-
-The agent writes its review evidence to:
-
-```text
-Task2/docs/code_review_agent_report.md
-```
 
 ## Run Tests
 
@@ -101,7 +81,7 @@ python -m pytest Task2/tests -q
 Open a terminal from the project root, then move into the generated Flask app folder:
 
 ```powershell
-cd "C:\Users\Qingyi Yang\Desktop\DTS114\2469447_Qingyi.Yang\Task2\app"
+cd "Task2/app"
 ```
 
 Build and run the Docker image:
@@ -112,14 +92,6 @@ docker run --rm -p 5000:5000 --env-file ../../.env travel-planner-generator
 ```
 
 The `--env-file ../../.env` path assumes the `.env` file is in the project root, two levels above `Task2/app`.
-
-If port 5000 is already in use, run the container on port 5001 instead:
-
-```powershell
-docker run --rm -p 5001:5000 --env-file ../../.env travel-planner-generator
-```
-
-Then open `http://localhost:5001`.
 
 Then open:
 
