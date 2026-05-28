@@ -8,6 +8,8 @@ The selected business problem is a travel planner website. Users enter a destina
 
 The website uses two AI-generated images. First, the notebook generates a default travel-planner website image and saves it into the generated website assets. This image is visible when the website first loads. Second, after the user submits a destination, the website calls the generated Flask API to create a destination-specific AI image based on the user's input.
 
+The notebook also uses a lightweight frontend image contract agent. This agent checks the AI-generated frontend for the default image, destination image area, and `/api/destination-image` call. If one part is missing, it adds only that frontend integration and records its actions in `Task2/docs/frontend_image_contract_agent_report.md`.
+
 ## Structure
 
 ```text
@@ -22,6 +24,7 @@ Task2/
     requirements.txt
     Dockerfile
   docs/
+    frontend_image_contract_agent_report.md
   tests/
   uml/
   deployment.md
@@ -65,6 +68,8 @@ Task1/travel_planner_generator.ipynb
 ```
 
 The notebook generates the Task2 artefacts, including documentation, UML diagrams, Flask API code, website code, tests, CI workflow configuration, Docker deployment files, and a default AI-generated website image.
+
+During frontend generation, the notebook runs the lightweight frontend image contract agent. It does not replace the generated app; it only checks and stabilises the image integration.
 
 The recommended layout is to run the notebook from `Task1`. If the notebook is run from a standalone folder, it will use the current working directory as the project root and create a `Task2` folder there.
 

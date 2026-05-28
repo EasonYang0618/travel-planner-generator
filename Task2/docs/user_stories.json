@@ -2,62 +2,62 @@
   "user_stories": [
     {
       "id": "US1",
-      "role": "Tourist",
-      "goal": "Enter destination, trip length, budget level, and interests to generate a personalised day-by-day itinerary",
-      "benefit": "Quickly receive a tailored travel plan that matches my constraints and preferences",
+      "role": "As a tourist planning a trip",
+      "goal": "I want to enter a destination, trip length, budget level, and interests to generate a personalised itinerary",
+      "benefit": "so I can get a ready-to-follow day-by-day plan tailored to my constraints and preferences",
       "acceptance_criteria": [
-        "There is an input form (website) and a JSON payload (API) that accept destination, trip_length (days), budget_level, and a list of interests",
-        "Submitting valid input returns an itinerary containing exactly trip_length days",
-        "Each day in the itinerary includes at least one activity, estimated time or duration, and an estimated cost",
-        "Returned itinerary respects the selected budget_level and prioritises activities that match the selected interests"
+        "The UI accepts destination, start date or trip length (days), budget level (low/medium/high) and selectable interests (e.g., museums, food, outdoors)",
+        "Submitting valid input returns a day-by-day itinerary with at least one activity per day and total days equal to trip length",
+        "Activities in the itinerary align with the selected interests and reflect the chosen budget level (e.g., fewer paid attractions for 'low' budget)",
+        "Invalid or missing required inputs return clear, user-facing validation messages"
       ]
     },
     {
       "id": "US2",
-      "role": "Tourist",
-      "goal": "View the generated itinerary in a clear, day-by-day layout on the website",
-      "benefit": "Easily follow and use the travel plan during the trip",
+      "role": "As a website visitor",
+      "goal": "I want to view the generated itinerary on the website in a clear, navigable format",
+      "benefit": "so I can easily read, follow, and act on the plan while planning or traveling",
       "acceptance_criteria": [
-        "The website displays days in order with activity titles, descriptions, estimated times, and cost per activity",
-        "Each activity includes an optional link to a map or external resource when available",
-        "The itinerary page is readable on desktop and mobile (responsive)",
-        "There is a 'Print / Export' option that produces a printer-friendly view or downloadable PDF"
+        "The website displays a day-by-day layout with each day's activities grouped and ordered",
+        "Each activity shows a title, short description, estimated time or duration, approximate cost, and a link to a map/location",
+        "The itinerary page is responsive (usable on desktop and mobile) and includes a print-friendly view",
+        "Users can expand/collapse days and copy or highlight text for external use"
       ]
     },
     {
       "id": "US3",
-      "role": "Developer / API consumer",
-      "goal": "Use a Flask API to programmatically generate itineraries",
-      "benefit": "Integrate itinerary generation into other systems or automate workflows",
+      "role": "As an external app or developer",
+      "goal": "I want a Flask API endpoint that generates itineraries from JSON input",
+      "benefit": "so other clients or services can programmatically obtain itineraries and integrate them into different interfaces",
       "acceptance_criteria": [
-        "A documented POST endpoint /api/generate accepts JSON with destination, trip_length, budget_level, and interests",
-        "The API returns JSON with HTTP 200 and a defined itinerary schema on success and HTTP 4xx with error details for invalid input",
-        "The API response includes metadata: generation_timestamp, estimated_total_cost, and confidence_score for recommendations",
-        "Rate-limited or well-formed error responses are returned for malformed requests"
+        "A POST /api/itinerary endpoint accepts a JSON body with destination, trip_length, budget_level, and interests",
+        "Valid requests return HTTP 200 with a JSON response containing a day-by-day array of activities; invalid requests return HTTP 400 with error details",
+        "Responses follow a documented schema (days ordered, each day contains activities with title, description, estimated_time, and estimated_cost)",
+        "CORS and basic rate limiting are configured to allow safe cross-origin use from the website client"
       ]
     },
     {
       "id": "US4",
-      "role": "Tourist",
-      "goal": "Adjust preferences and regenerate or save different itinerary versions",
-      "benefit": "Iterate on plans without losing prior options and compare alternatives",
+      "role": "As a traveller who wants to customise the plan",
+      "goal": "I want to tweak activities in the generated itinerary (reorder, remove, substitute) and persist my changes locally",
+      "benefit": "so I can tailor the plan to my real-world constraints without losing my adjustments",
       "acceptance_criteria": [
-        "Users can modify destination, trip_length, budget_level, or interests and request a regenerated itinerary",
-        "There is an option to save generated itineraries with a user-visible name and timestamp",
-        "Saved itineraries are listed with the ability to restore, delete, or compare two versions",
-        "Regenerating does not overwrite saved versions unless the user explicitly chooses to replace them"
+        "The UI allows reordering, removing, and adding activities within each day via simple controls",
+        "Users can save their modified itinerary to browser local storage or download it, and later reopen the saved version in the web app",
+        "Saved itineraries retain the day structure and activity metadata (title, description, time, cost)",
+        "Attempting to save invalid edits (e.g., negative durations) prompts a validation error and prevents persistence"
       ]
     },
     {
       "id": "US5",
-      "role": "Travel Agent / Admin",
-      "goal": "Review and edit generated itineraries before delivering them to clients",
-      "benefit": "Ensure quality and customise proposals to client needs",
+      "role": "As a traveller preparing for offline use",
+      "goal": "I want to export or print the itinerary so I can use it without internet access",
+      "benefit": "so I can follow the plan while travelling even when I have no connectivity",
       "acceptance_criteria": [
-        "Admins can view a list of generated itineraries and open any itinerary for editing",
-        "Edits allow adding/removing activities, changing times, and adjusting costs with changes tracked",
-        "There is an approval or publish action that locks the itinerary for client view and records the approver and timestamp",
-        "A basic version history is available showing at least the last three changes with author and timestamp"
+        "The website offers a printable view and a downloadable PDF of the itinerary preserving day-by-day layout and activity details",
+        "The API or website provides an option to download the itinerary as structured JSON for offline tools",
+        "Exported documents include basic contact/location links and estimated costs to help on-ground decision-making",
+        "Export and print functions complete without errors for itineraries up to at least 14 days"
       ]
     }
   ]

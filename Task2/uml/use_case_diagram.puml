@@ -1,40 +1,39 @@
 @startuml
 left to right direction
-skinparam usecase {
-  BackgroundColor #FEF9E7
-  BorderColor #2E86C1
-}
+skinparam packageStyle rectangle
 
 actor Tourist
-actor "Travel Agency Assistant" as Agent
+actor "Travel Agency Assistant" as Assistant
 
 rectangle "Travel Planner Generator" {
-  usecase UC_Preferences as "Enter Preferences\n(destination, trip length,\nbudget level, interests)"
-  usecase UC_Generate as "Generate Itinerary\n(day-by-day plan)"
-  usecase UC_View as "View Website\n(responsive itinerary UI)"
-  usecase UC_Image as "Request Destination Image"
-  usecase UC_API as "Access API\n(POST /api/itineraries,\nGET /api/itineraries/{id})"
+  usecase "View Website\n(home form & results page)" as UC_ViewWebsite
+  usecase "Enter Preferences\n(destination, days, budget,\ninterests, randomize)" as UC_EnterPrefs
+  usecase "Validate Input" as UC_Validate
+  usecase "Generate Itinerary\n(day-by-day JSON)" as UC_Generate
+  usecase "Access API\n(POST /api/itineraries,\nGET /api/itineraries/{id})" as UC_API
+  usecase "Request Destination Image" as UC_RequestImage
+  usecase "Save Itinerary" as UC_Save
+  usecase "View Saved Itineraries" as UC_ViewSaved
 }
 
-' Primary associations
-Tourist --> UC_Preferences
-Tourist --> UC_View
-Tourist --> UC_Image
+Tourist --> UC_ViewWebsite
+Tourist --> UC_EnterPrefs
+Tourist --> UC_RequestImage
 Tourist --> UC_API
+Tourist --> UC_Save
+Tourist --> UC_ViewSaved
 
-Agent --> UC_Preferences
-Agent --> UC_Generate
-Agent --> UC_View
-Agent --> UC_API
-Agent --> UC_Image
+Assistant --> UC_ViewWebsite
+Assistant --> UC_EnterPrefs
+Assistant --> UC_API
+Assistant --> UC_RequestImage
+Assistant --> UC_Save
+Assistant --> UC_ViewSaved
 
-' Use-case relationships
-UC_Preferences ..> UC_Generate : <<include>>
-UC_API ..> UC_Generate : <<include>>
-UC_View ..> UC_Image : <<include>>
-
-' Optional relationships to show alternate flows
-UC_Generate .> UC_View : result shown on
-UC_Generate .> UC_API : can be triggered via
+UC_ViewWebsite .> UC_EnterPrefs : <<include>>
+UC_Generate .> UC_Validate : <<include>>
+UC_Generate .> UC_API : <<include>>
+UC_ViewWebsite .> UC_RequestImage : <<include>>
+UC_Save .> UC_Generate : <<extend>>
 
 @enduml
