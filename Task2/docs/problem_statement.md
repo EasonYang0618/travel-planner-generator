@@ -1,1 +1,0 @@
-Design and implement a Flask-backed web application (REST API + user-facing website) that accepts a destination, trip length, budget level, and user interests and returns a clear, personalized day-by-day city travel itinerary that respects the user’s constraints and is usable, maintainable, and performant.

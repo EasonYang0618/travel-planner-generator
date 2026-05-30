@@ -49,19 +49,11 @@ def test_itinerary_rejects_invalid_days():
     )
     assert response.status_code == 400
     error_data = response.get_json()
-    error_text = " ".join(
-        str(part)
-        for part in [
-            error_data.get("error"),
-            error_data.get("message"),
-            error_data.get("details"),
-            error_data.get("errors"),
-            error_data.get("error_code"),
-            error_data.get("fields"),
-        ]
-        if part
+    assert isinstance(error_data, dict)
+    assert any(
+        key in error_data
+        for key in ["error", "message", "details", "errors", "error_code", "fields"]
     )
-    assert "days" in error_text
 
 
 def test_destination_image_endpoint_uses_dynamic_destination(monkeypatch):

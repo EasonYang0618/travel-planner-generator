@@ -1,0 +1,28 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+actor Tourist
+actor "Travel Agency Assistant" as Assistant
+
+package "Travel Planner Generator" {
+  usecase "Enter Preferences\n(destination, days, budget, interests)" as EnterPrefs
+  usecase "Generate Itinerary\n(day-by-day JSON & schedule)" as GenerateItin
+  usecase "View Website\n(form, results, recent items)" as ViewWebsite
+  usecase "Request Destination Image\n(optional POI enrichment)" as ReqImage
+  usecase "Access API\n(POST /api/itineraries, GET/DELETE)" as AccessAPI
+}
+
+Tourist -- ViewWebsite
+Tourist -- EnterPrefs
+Tourist --> GenerateItin
+Tourist -- ReqImage
+
+Assistant -- AccessAPI
+Assistant -- ViewWebsite
+Assistant --> GenerateItin
+
+EnterPrefs .> GenerateItin : <<include>>
+AccessAPI .> GenerateItin : <<include>>
+ReqImage .> GenerateItin : <<extend>>
+@enduml

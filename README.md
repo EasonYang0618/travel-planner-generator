@@ -8,7 +8,7 @@ The selected business problem is a travel planner website. Users enter a destina
 
 The website uses two AI-generated images. First, the notebook generates a default travel-planner website image and saves it into the generated website assets. This image is visible when the website first loads. Second, after the user submits a destination, the website calls the generated Flask API to create a destination-specific AI image based on the user's input.
 
-The notebook also uses a lightweight frontend image contract agent. This agent checks the AI-generated frontend for the default image, destination image area, and `/api/destination-image` call. If one part is missing, it adds only that frontend integration and records its actions in `Task2/docs/frontend_image_contract_agent_report.md`.
+The notebook also uses a lightweight frontend image contract agent. This agent checks the AI-generated frontend for the default image, destination image area, and `/api/destination-image` call. If one part is missing, it adds only that frontend integration and records its actions in `Task1/artifacts/docs/frontend_image_contract_agent_report.md`.
 
 ## Structure
 
@@ -16,18 +16,20 @@ The notebook also uses a lightweight frontend image contract agent. This agent c
 Task1/
   travel_planner_generator.ipynb
   ai_in_se_cw.yml
+  artifacts/
+    app/
+      app.py
+      index.html
+      requirements.txt
+      Dockerfile
+    docs/
+      frontend_image_contract_agent_report.md
+    tests/
+    uml/
+    deployment.md
 
 Task2/
-  app/
-    app.py
-    index.html
-    requirements.txt
-    Dockerfile
-  docs/
-    frontend_image_contract_agent_report.md
-  tests/
-  uml/
-  deployment.md
+  screenshots/
 ```
 
 ## Environment
@@ -48,7 +50,7 @@ The coursework conda environment file is included at:
 Task1/ai_in_se_cw.yml
 ```
 
-An APIFree API key should be provided as `APIFREE_API_KEY` in the submitted `.env` file or as an environment variable. Internet access is required for APIFree generation and PlantUML rendering.
+An APIFree API key should be provided as `APIFREE_API_KEY` in the submitted `.env` file or as an environment variable. Internet access is required for APIFree generation and PlantUML rendering. The submitted APIFree key may have limited remaining credit; if APIFree generation fails because of insufficient balance, please replace it with another valid APIFree key.
 
 The submitted `.env` file should use this format:
 
@@ -67,18 +69,18 @@ Open and run:
 Task1/travel_planner_generator.ipynb
 ```
 
-The notebook generates the Task2 artefacts, including documentation, UML diagrams, Flask API code, website code, tests, CI workflow configuration, Docker deployment files, and a default AI-generated website image.
+The notebook generates the coursework artefacts under `Task1/artifacts`, including documentation, UML diagrams, Flask API code, website code, tests, Docker deployment files, and a default AI-generated website image.
 
 During frontend generation, the notebook runs the lightweight frontend image contract agent. It does not replace the generated app; it only checks and stabilises the image integration.
 
-The recommended layout is to run the notebook from `Task1`. If the notebook is run from a standalone folder, it will use the current working directory as the project root and create a `Task2` folder there.
+The recommended layout is to run the notebook from `Task1`. The generated output is written to `Task1/artifacts`.
 
 ## Run Tests
 
 From the project root:
 
 ```powershell
-python -m pytest Task2/tests -q
+python -m pytest Task1/artifacts/tests -q
 ```
 
 ## Docker Deployment
@@ -86,17 +88,17 @@ python -m pytest Task2/tests -q
 Open a terminal from the project root, then move into the generated Flask app folder:
 
 ```powershell
-cd "Task2/app"
+cd "Task1/artifacts/app"
 ```
 
 Build and run the Docker image:
 
 ```powershell
 docker build -t travel-planner-generator .
-docker run --rm -p 5000:5000 --env-file ../../.env travel-planner-generator
+docker run --rm -p 5000:5000 --env-file ../../../.env travel-planner-generator
 ```
 
-The `--env-file ../../.env` path assumes the `.env` file is in the project root, two levels above `Task2/app`.
+The `--env-file ../../../.env` path assumes the `.env` file is in the project root, three levels above `Task1/artifacts/app`.
 
 Then open:
 
@@ -106,7 +108,7 @@ http://localhost:5000
 
 ## Optional: Run Website Without Docker
 
-From `Task2/app`:
+From `Task1/artifacts/app`:
 
 ```powershell
 python app.py

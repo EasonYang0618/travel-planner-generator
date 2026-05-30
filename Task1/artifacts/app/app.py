@@ -4,138 +4,80 @@ import base64
 import time
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-import os
+import os, datetime, hashlib
 
 app = Flask(__name__)
 CORS(app)
 
 INTEREST_MAP = {
-    'nature': 'outdoor', 'outdoors': 'outdoor', 'outdoor': 'outdoor',
+    'nature': 'outdoor', 'outdoors': 'outdoor',
     'museum': 'museums', 'museums': 'museums',
     'history': 'culture', 'culture': 'culture',
     'dining': 'food', 'food': 'food',
-    'nightlife': 'nightlife', 'family': 'family', 'shopping': 'shopping'
+    'nightlife': 'nightlife','shopping':'shopping'
 }
+DEFAULT_INTERESTS = ['culture', 'food', 'outdoor']
 
 ACTIVITY_TEMPLATES = {
-    'museums': {
-        'morning': "Visit a prominent museum to explore local art and history.",
-        'afternoon': "Take a guided tour in a specialty gallery or exhibition.",
-        'evening': "Attend an evening lecture or museum special event if available."
-    },
-    'food': {
-        'morning': "Start with a local breakfast spot or food market tasting.",
-        'afternoon': "Join a food tour or try street food specialties.",
-        'evening': "Dine at a recommended local restaurant or sample nightlife eats."
-    },
-    'outdoor': {
-        'morning': "Walk a scenic trail or visit a city park for views and photos.",
-        'afternoon': "Explore outdoor markets, gardens, or a nearby natural site.",
-        'evening': "Relax at a waterfront, viewpoint or enjoy a sunset picnic."
-    },
-    'culture': {
-        'morning': "Stroll historic neighborhoods and visit notable landmarks.",
-        'afternoon': "Discover cultural centers, monuments, or heritage sites.",
-        'evening': "Enjoy a cultural performance or a historic walking tour by lantern."
-    },
-    'nightlife': {
-        'morning': "Sleep in or enjoy a leisurely brunch after a late night.",
-        'afternoon': "Visit craft breweries or local cafés to prepare for the evening.",
-        'evening': "Experience the city's nightlife: bars, live music, or clubs."
-    },
-    'family': {
-        'morning': "Visit a child-friendly attraction like a zoo or interactive museum.",
-        'afternoon': "Plan hands-on activities or a family picnic in a park.",
-        'evening': "Choose an early family-friendly show or relaxed dinner spot."
-    },
-    'shopping': {
-        'morning': "Browse local artisan markets and boutiques.",
-        'afternoon': "Explore a shopping district and seek local specialties.",
-        'evening': "Visit a night market or pick a relaxed café to review finds."
-    }
+    'culture': [
+        ("City Museum visit", "Explore a local museum or cultural center."),
+        ("Historical walking tour", "Guided or self-guided walk through historic district.")
+    ],
+    'museums': [
+        ("Art & History Museum", "See curated exhibits highlighting local heritage."),
+        ("Special exhibition", "Temporary exhibits featuring regional artists.")
+    ],
+    'food': [
+        ("Local market tasting", "Sample street food and local specialties."),
+        ("Recommended restaurant", "Sit-down meal at a popular local spot.")
+    ],
+    'outdoor': [
+        ("Scenic park visit", "Relax or walk in a well-known park or nature spot."),
+        ("Coastal promenade", "Walk along waterfront or viewpoints.")
+    ],
+    'nightlife': [
+        ("Live music venue", "Enjoy local bands or performances."),
+        ("Bar hop", "Visit a selection of popular local bars.")
+    ],
+    'shopping': [
+        ("Local artisan market", "Browse crafts and souvenirs."),
+        ("Shopping street", "Explore boutiques and local designers.")
+    ]
 }
 
-BUDGET_NOTE = {
-    'low': "Low budget: focus on free and low-cost activities.",
-    'medium': "Medium budget: mix of free attractions and paid highlights.",
-    'high': "High budget: include premium experiences and dining options."
-}
+BUDGET_SCALE = {'low': 0.5, 'medium': 1.0, 'high': 2.0}
 
 def normalize_interests(raw):
     if not raw:
-        return ['culture', 'food', 'outdoor']
+        return DEFAULT_INTERESTS
     if isinstance(raw, str):
-        parts = [p.strip().lower() for p in raw.split(',') if p.strip()]
+        items = [s.strip() for s in raw.split(',')]
     elif isinstance(raw, list):
-        parts = [str(p).strip().lower() for p in raw]
+        items = raw
     else:
-        parts = []
+        return DEFAULT_INTERESTS
     mapped = []
-    for p in parts:
-        if p in INTEREST_MAP:
-            v = INTEREST_MAP[p]
-            if v not in mapped:
-                mapped.append(v)
-    if not mapped:
-        return ['culture', 'food', 'outdoor']
-    return mapped
+    for it in items:
+        if not it: continue
+        key = it.lower()
+        mapped.append(INTEREST_MAP.get(key, key))
+    mapped = [m for m in mapped if m]
+    # keep only known or defaults
+    valid = [m for m in mapped if m in ACTIVITY_TEMPLATES]
+    return valid if valid else DEFAULT_INTERESTS
 
-def pick_activity(partials, interest, part_of_day, day_index, budget):
-    templates = ACTIVITY_TEMPLATES.get(interest, {})
-    base = templates.get(part_of_day)
-    if not base:
-        return ""
-    # Slight variation deterministically
-    suffix = ""
-    if budget == 'low' and part_of_day == 'evening':
-        suffix = " Opt for local low-cost options or street food."
-    if day_index % 3 == 0:
-        suffix += " Consider a shorter visit to leave time for wandering."
-    return base + suffix
+def seed_from_inputs(destination, days, budget, interests, travel_style):
+    s = f"{destination}|{days}|{budget}|{','.join(interests)}|{travel_style}"
+    return int(hashlib.md5(s.encode()).hexdigest()[:8], 16)
 
-def generate_itinerary(destination, days, budget, interests, travel_style):
-    overview = f"{days}-day trip to {destination}. Focus: {', '.join(interests)}. Budget: {budget}."
-    tips = [
-        "Book popular attractions in advance when possible.",
-        "Mix iconic sights with local neighbourhood exploration.",
-        "Keep afternoons flexible for rest or spontaneous discoveries."
-    ]
-    itinerary = []
-    for i in range(1, days + 1):
-        interest = interests[(i - 1) % len(interests)]
-        # decide which parts to fill to ensure at least one activity
-        morning = pick_activity(ACTIVITY_TEMPLATES, interest, 'morning', i, budget) if True else ""
-        afternoon = pick_activity(ACTIVITY_TEMPLATES, interest, 'afternoon', i, budget) if True else ""
-        evening = pick_activity(ACTIVITY_TEMPLATES, interest, 'evening', i, budget) if True else ""
-        # If template missing (empty), try other interests to ensure at least one activity
-        if not (morning or afternoon or evening):
-            for alt in ['culture','food','outdoor']:
-                morning = morning or pick_activity(ACTIVITY_TEMPLATES, alt, 'morning', i, budget)
-                afternoon = afternoon or pick_activity(ACTIVITY_TEMPLATES, alt, 'afternoon', i, budget)
-                evening = evening or pick_activity(ACTIVITY_TEMPLATES, alt, 'evening', i, budget)
-                if morning or afternoon or evening:
-                    break
-        day_entry = {
-            "day": i,
-            "morning": morning,
-            "afternoon": afternoon,
-            "evening": evening,
-            "budget_note": BUDGET_NOTE.get(budget, BUDGET_NOTE['medium'])
-        }
-        itinerary.append(day_entry)
-    # Add small personalized tip based on travel_style
-    if travel_style:
-        tips.append(f"Travel style note: {travel_style}. Tailor activities to your preferred pace.")
-    return {
-        "destination": destination,
-        "days": days,
-        "budget": budget,
-        "interests": interests,
-        "travel_style": travel_style,
-        "overview": overview,
-        "itinerary": itinerary,
-        "tips": tips
-    }
+def pick_activity(interest, index):
+    options = ACTIVITY_TEMPLATES.get(interest, ACTIVITY_TEMPLATES['culture'])
+    return options[index % len(options)]
+
+def cost_for_activity(budget_level):
+    base = 20
+    scale = BUDGET_SCALE.get(budget_level, 1.0)
+    return int(base * scale)
 
 
 def parse_interests(raw):
@@ -180,40 +122,94 @@ def make_activity(interest, time_window, *args):
     location_prefix = f"{destination} " if destination else ""
     return {"title": title, "name": title, "description": description, "time_window": time_window, "duration_minutes": 90, "estimated_cost": int(((low + high) / 2) * multiplier), "location": f"{location_prefix}{interest.title()} area"}
 
-@app.route("/", methods=["GET"])
-def index():
-    return send_from_directory(".", "index.html")
 @app.route('/health', methods=['GET'])
 def health():
     return jsonify({"status": "ok"})
 
+@app.route("/", methods=["GET"])
+def index():
+    return send_from_directory(".", "index.html")
 
 @app.route("/generated_images/<path:filename>", methods=["GET"])
 def generated_image_file(filename):
     return send_from_directory(os.path.join(app.root_path, "generated_images"), filename)
 
 @app.route('/api/itinerary', methods=['POST'])
-def api_itinerary():
-    data = request.get_json(force=True, silent=True)
-    if not data:
-        return jsonify({"error": "Invalid or missing JSON body"}), 400
-    destination = data.get('destination') or data.get('city') or ""
-    days = data.get('days')
-    budget = (data.get('budget') or "medium").lower()
-    raw_interests = data.get('interests')
-    travel_style = data.get('travel_style') or data.get('style') or ""
-    # validations
-    if not isinstance(destination, str) or not destination.strip():
-        return jsonify({"error": "destination is required"}), 400
+def create_itinerary():
+    data = request.get_json(silent=True) or {}
+    destination = (data.get('destination') or "").strip()
     try:
-        days = int(days)
+        days = int(data.get('days'))
     except Exception:
-        return jsonify({"error": "days must be an integer"}), 400
-    if not (1 <= days <= 14):
-        return jsonify({"error": "days must be between 1 and 14"}), 400
-    interests = normalize_interests(raw_interests)
-    itinerary = generate_itinerary(destination.strip(), days, budget if budget in BUDGET_NOTE else "medium", interests, travel_style)
-    return jsonify(itinerary)
+        days = None
+    budget = (data.get('budget') or "medium").lower()
+    interests = normalize_interests(data.get('interests'))
+    travel_style = (data.get('travel_style') or "moderate")
+    if not destination:
+        return jsonify({"error": "destination is required"}), 400
+    if days is None or not (1 <= days <= 14):
+        return jsonify({"error": "days must be an integer between 1 and 14"}), 400
+
+    seed = seed_from_inputs(destination, days, budget, interests, travel_style)
+    itinerary = []
+    total_estimated = 0
+    for d in range(1, days + 1):
+        # Deterministic selection based on seed and day
+        idx = (seed + d) % 997
+        morning, afternoon, evening = [], [], []
+        chosen_interest = interests[(seed + d) % len(interests)]
+        # pick activities rotating through interests
+        mi_name, mi_desc = pick_activity(chosen_interest, d)
+        cost = cost_for_activity(budget) + ((d * 3) % 20)
+        morning = [{"name": mi_name, "description": mi_desc,
+                    "est_duration_minutes": 120, "est_cost": cost}]
+        total = cost
+        # Afternoon: alternate interest or add local food
+        ai_interest = interests[(seed + d + 1) % len(interests)]
+        ai_name, ai_desc = pick_activity(ai_interest, d+1)
+        cost2 = int(cost * (0.8 if budget=='low' else 1.0))
+        afternoon = [{"name": ai_name, "description": ai_desc,
+                      "est_duration_minutes": 150, "est_cost": cost2}]
+        total += cost2
+        # Evening optional: add if travel_style or nightlife interest
+        if travel_style.lower() in ('relaxed','social') or 'nightlife' in interests or (d % 2 == 0):
+            ei_name, ei_desc = pick_activity('food', d+2)
+            cost3 = int(cost * (0.6 if budget=='low' else 1.2))
+            evening = [{"name": "Evening: " + ei_name, "description": "Dinner and evening activity. " + ei_desc,
+                        "est_duration_minutes": 120, "est_cost": cost3}]
+            total += cost3
+        # Ensure at least one activity
+        if not (morning or afternoon or evening):
+            morning = [{"name":"Leisure time","description":"Free time to explore.","est_duration_minutes":180,"est_cost":0}]
+        budget_note = f"Estimated daily spend: ${total}"
+        total_estimated += total
+        itinerary.append({
+            "day": d,
+            "morning": morning,
+            "afternoon": afternoon,
+            "evening": evening,
+            "budget_note": budget_note
+        })
+
+    overview = f"{days}-day trip to {destination} focused on {', '.join(interests)} with a {budget} budget."
+    tips = [
+        "Book major attractions in advance when possible.",
+        "Use public transport to save money and time.",
+        "Allow flexibility in your schedule for unexpected finds."
+    ]
+    result = {
+        "destination": destination,
+        "days": days,
+        "budget": budget,
+        "interests": interests,
+        "travel_style": travel_style,
+        "overview": overview,
+        "itinerary": itinerary,
+        "tips": tips,
+        "estimated_total": f"${total_estimated}",
+        "created_at": datetime.datetime.utcnow().isoformat() + "Z"
+    }
+    return jsonify(result), 201
 
 
 def slugify(value):
@@ -303,5 +299,5 @@ def api_destination_image():
         return jsonify({"error": "Image generation failed", "details": str(e)}), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.getenv("PORT", "5000"))
     app.run(host='0.0.0.0', port=port)

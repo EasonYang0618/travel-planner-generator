@@ -4,7 +4,7 @@ The generated Travel Planner Generator can be deployed with Docker.
 
 ## Build
 
-Run from `Task2/app`:
+Run from `Task1/artifacts/app`:
 
 ```powershell
 docker build -t travel-planner-generator .
@@ -15,7 +15,7 @@ docker build -t travel-planner-generator .
 Run with the APIFree key supplied as an environment variable:
 
 ```powershell
-docker run --rm -p 5000:5000 --env-file ../../.env travel-planner-generator
+docker run --rm -p 5000:5000 --env-file ../../../.env travel-planner-generator
 ```
 
 Then open:
