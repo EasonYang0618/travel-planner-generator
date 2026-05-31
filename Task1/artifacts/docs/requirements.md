@@ -1,159 +1,213 @@
 # Requirements
 
-Project: City Travel Itinerary Generator — Flask API + Website  
-Scope: Coursework-level web application (Flask backend, lightweight front-end) that generates simple, personalised day-by-day city itineraries from user inputs.
+This document defines functional and non-functional requirements for a coursework-scale Flask API + website that generates personalised city travel itineraries for a small travel agency. It is scoped for a student project and includes explicit stability/quality constraints required by the coursework quality contract.
 
 ---
 
-## Functional requirements
+## 1. Functional requirements
 
-Each requirement is numbered FR-#. Priority: (High / Medium / Low)
+1.1 API: endpoints
+- GET /health
+  - Returns HTTP 200 and a simple JSON status object when the service is healthy.
+- POST /api/itinerary
+  - Accepts a JSON request body (see 1.2).
+  - Returns HTTP 200 with a JSON itinerary response on success (see 1.3).
+  - Returns HTTP 400 with a JSON error object on invalid input.
 
-FR-1 — User input form (High)  
-- The website must provide a web form that accepts:
-  - Destination (city name) — text
-  - Trip length (number of days) — integer (1–30)
-  - Budget level — enum {low, medium, high}
-  - Interests — multiple-select list (e.g., culture, food, museums, outdoors, nightlife, shopping)
-  - Optional: desired daily start/end times, mobility constraints (walking vs public transport)
-- Acceptance: form validates required fields and shows inline errors.
+1.2 API: request schema (POST /api/itinerary)
+- Request body must be JSON with these fields:
+  - destination: string (e.g., "Lisbon")
+  - days: integer (>=1)
+  - budget: integer (e.g., numeric scale 1..5 or absolute daily budget; project may pick a scale but must be numeric)
+  - interests: array of strings (e.g., ["food", "outdoor", "history"])
+  - travel_style: string (e.g., "relaxed", "active")
+- The API must validate required fields and types. Missing/invalid fields must produce HTTP 400 with a JSON error object.
 
-FR-2 — API endpoint to generate itinerary (High)  
-- Expose a Flask JSON API endpoint to request generation:
-  - POST /api/itineraries
-  - Request body: destination, days, budget, interests, optional parameters
-  - Response: 201 Created with a JSON itinerary object (see FR-4) or error (400/422)
-- Acceptance: valid POST returns a well-formed itinerary JSON within response time limit (see NFR).
+1.3 API: success response schema (stable)
+- Top-level JSON object MUST contain these keys:
+  - destination: string
+  - days: integer
+  - budget: numeric
+  - interests: array of strings
+  - travel_style: string
+  - overview: string (human-readable trip summary)
+  - itinerary: array of day objects (length MUST equal days)
+  - tips: array of strings (human-readable tips)
+- Each day object MUST contain:
+  - day: integer (1-based)
+  - morning: activity object or human-readable string (see 1.4)
+  - afternoon: activity object or human-readable string
+  - evening: activity object or human-readable string
+  - budget_note: numeric or string explaining day cost (budget numeric adjustments must be present)
+- Activity object (if used) MUST have at least:
+  - title: string (human-readable)
+  - description: string (human-readable)
+  - estimated_cost: numeric (adjusted by budget)
+  - image_prompt: string (optional): a text prompt for later AI image generation (note: API must not return image binary data)
+- Notes:
+  - Activity titles/descriptions must always be strings. The frontend must never receive raw JS objects in place of strings (no [object Object] display).
+  - estimated_cost must be numeric (not "low/medium/high" strings). If a per-activity breakdown is not provided, budget_note must include a numeric value for that day.
+  - The itinerary array length MUST equal the `days` value supplied.
 
-FR-3 — Web UI result display (High)  
-- The site must display a clear, day-by-day itinerary based on the user inputs:
-  - Day headers (Day 1, Day 2, …)
-  - For each day: list of activities with title, type, estimated duration, approximate cost, start time (if scheduled)
-  - A summary of daily total estimated cost and travel time
-- Acceptance: user sees a readable itinerary page after submitting the form.
+1.4 Activity generation constraints (content generation contract)
+- For each interest, the backend must expand it into several concrete activities before assembling the daily itinerary so the trip does not repeat the same three generic activities across multiple days.
+  - Example mappings (for guidance): 
+    - "food" -> ["breakfast street-food lane", "local market tasting", "signature restaurant meal", "dessert and tea stop", "evening snack street"]
+    - "outdoor" -> ["lakefront walk", "city park reset", "scenic viewpoint", "garden or nature trail"]
+- Each day should, where possible, have a different theme or planning focus (e.g., "historic neighborhoods", "culinary day", "riverfront & parks").
+- When assigning activities to slots (morning/afternoon/evening):
+  - Rotate items so the same generic fallback does not appear each day in the same slot.
+  - Use destination, day number, time slot, and user interests to vary titles/descriptions.
+- Activity text must be human-readable phrases (not raw objects). The backend may include structured activity objects, but all displayed text must derive from string fields.
 
-FR-4 — Itinerary JSON schema (High)  
-- Itinerary responses (API and website data layer) must follow a consistent JSON structure:
-  - itinerary_id (string)
-  - destination (string)
-  - days (integer)
-  - budget_level (string)
-  - interests (array[string])
-  - created_at (ISO timestamp)
-  - day_plan: array of objects { day_number (int), activities: array of { id, name, type, description, est_duration_minutes, est_cost, start_time_optional, location { lat, lon, address_optional } } }
-- Acceptance: API response validates against this schema.
+1.5 Error handling
+- Invalid input must return HTTP 400 and JSON:
+  - error: string short message
+  - details: optional object or string with validation details
+- The API must never return HTML error pages for API requests.
 
-FR-5 — Basic itinerary generation logic (High)  
-- Implement a deterministic rule-based generator appropriate for coursework:
-  - Distribute activities by interest and day
-  - Respect trip length and budget level when selecting and ordering activities
-  - Create reasonable time estimates and a simple daily schedule (morning/afternoon/evening)
-- Acceptance: given identical inputs, service returns consistent itineraries; activities respect user interests and budget.
+1.6 Frontend (website) requirements
+- Single-page or multi-page Flask-served site that:
+  - Presents a form allowing the user to enter destination, days, budget, interests, travel_style.
+  - Submits the form to POST /api/itinerary and renders results returned by the API.
+- Stable HTML element IDs (these identifiers MUST exist in the generated frontend):
+  - plannerForm, destination, days, budget, interests, travel_style, resultsContainer, daysContainer, formMessage, errorMessage
+- Stable frontend JavaScript function names (these functions MUST be present and used where appropriate):
+  - collectFormData
+  - validateFormData
+  - setLoading
+  - showError
+  - renderItinerary
+  - renderDay
+  - renderActivity
+  - formatActivityText
+- Frontend rendering rules:
+  - The frontend must render human-readable text for activities; if activity objects are provided, use title/description/estimated_cost fields to build strings via formatActivityText.
+  - The frontend must never display "[object Object]" or raw object dumps. renderActivity must format fields into readable DOM text/nodes.
+  - No image preview area or client-side image generation/preview should be created by the frontend at this stage. Image integration will be handled separately by a dedicated image agent later.
+  - The frontend must surface error messages in the errorMessage element and general messages in formMessage.
 
-FR-6 — Optional enrichment via external POI API (Medium, optional)  
-- Support optional integration with a public Points-of-Interest API (configurable) to fetch POI names and locations.
-- The system must fall back to a local dataset or templates if external API is unavailable.
-- Acceptance: when configured, enrichment populates location/address fields; when not configured, generator still works.
-
-FR-7 — Persist generated itineraries (Medium)  
-- Store generated itineraries in a lightweight local database (e.g., SQLite) with itinerary_id, inputs, result, timestamp.
-- Provide API endpoints:
-  - GET /api/itineraries/{id} — retrieve one
-  - GET /api/itineraries — list recent (paginated)
-  - DELETE /api/itineraries/{id} — delete (optional)
-- Acceptance: saved itineraries can be retrieved by id.
-
-FR-8 — Session / client-side persistence (Medium)  
-- On the website, allow users to view a list of their recent generated itineraries stored in the server-side DB and/or browser local storage.
-- No user account system required; use session cookie or local storage to associate recent items.
-- Acceptance: recent items visible for the session.
-
-FR-9 — Input validation & error handling (High)  
-- Validate inputs on client and server:
-  - Destination non-empty
-  - Days within allowed range
-  - Budget and interests valid values
-- Return meaningful error messages and appropriate HTTP status codes.
-- Acceptance: invalid inputs return clear, actionable errors.
-
-FR-10 — Clear README and API documentation (High)  
-- Provide a README that explains how to run the Flask app, run tests, configure optional API keys, and lists API endpoints with sample requests/responses.
-- Acceptance: another student can run the project locally following instructions.
-
-FR-11 — Basic UI navigation (High)  
-- Website pages:
-  - Home / input form
-  - Itinerary result page
-  - Recent itineraries page
-  - About / help page
-- Acceptance: user can navigate between these pages.
-
-FR-12 — Export and share (Low)  
-- Allow export of an itinerary as JSON and as simple printable HTML (or PDF via browser print).
-- Acceptance: export buttons produce downloadable JSON and a print-friendly page.
-
-FR-13 — Rate limiting & abuse protection (Low for coursework)  
-- Implement a simple per-IP request throttle on the generation endpoint to avoid accidental heavy usage (e.g., 10 requests/min).
-- Acceptance: endpoint rejects excessive requests with 429.
+1.7 AI image generation (integration-friendly)
+- The API may include an image_prompt string per activity to allow later image generation by a separate service/agent.
+- The API and frontend must NOT return or display image binaries/preview areas at this stage.
+- The backend must not depend on any image-generation service for the core itinerary functionality; image prompts are optional metadata only.
 
 ---
 
-## Non-functional requirements
+## 2. Non-functional requirements
 
-NFR-1 — Performance (High)  
-- API should generate and return an itinerary within 3 seconds for normal inputs on a development machine.
-- UI pages should render initial response within 1.5 seconds after server response.
+2.1 Determinism and testability
+- Generation logic must be deterministic enough for automated tests:
+  - Either use a fixed random seed for content generation in test runs, or allow seeding via configuration/ENV variable (e.g., ITINERARY_SEED).
+  - Determinism ensures pytest-based automated checks can assert exact or stable properties.
+- Avoid external non-deterministic dependencies in core generation (or make them mockable).
 
-NFR-2 — Availability and reliability (Medium)  
-- The app should gracefully handle failures of optional external services (fallback to local data).
-- Unhandled exceptions should be logged and return friendly error pages/messages to the user.
+2.2 Performance
+- The API must respond to typical requests (single itinerary generation) within a reasonable time for coursework (target < 3s on modest hardware). If heavy processing is needed, include clear timeouts and progress indicators.
 
-NFR-3 — Security (High)  
-- Do not allow arbitrary file writes or command execution via inputs.
-- Validate and sanitize all inputs to prevent injection attacks (SQL injection, XSS).
-- Serve the front-end with CSRF protection for any state-changing endpoints (if forms post to the server).
-- Securely store any external API keys outside source control (e.g., environment variables).
+2.3 Reliability and stability
+- /health endpoint must reflect service availability.
+- Validate and sanitize all user input server-side to avoid crashes.
 
-NFR-4 — Data privacy (High)  
-- Do not collect personally identifiable information (PII). If any session identifiers are used, keep them minimal and expire sessions reasonably (e.g., session cookies expire after browser close or a short timeout).
-- Log only necessary metadata; no detailed user tracking.
+2.4 Security
+- Validate input types and sizes.
+- Escape content when rendering in HTML to prevent XSS.
+- Do not embed or return executable code in user-visible fields.
 
-NFR-5 — Usability and accessibility (Medium)  
-- UI must be usable on desktop and mobile (responsive layout).
-- Follow basic accessibility practices: semantic HTML, proper labels for inputs, keyboard navigable, and color contrast sufficient for readability.
+2.5 Maintainability and code quality
+- Clear separation between API layer, generation logic, and rendering templates/static assets.
+- Provide inline documentation/comments for stable functions and IDs required by the coursework tests.
 
-NFR-6 — Maintainability and code quality (High)  
-- Codebase should be modular with clear separation: Flask app, business logic (itinerary generator), data layer, templates/static files, and tests.
-- Include docstrings and inline comments for non-trivial functions.
-- Use a requirements.txt or pyproject.toml to list dependencies.
+2.6 Accessibility & UX (minimal)
+- Form fields must be labelled and reachable via keyboard.
+- Error and status messages must be visible and readable.
 
-NFR-7 — Testability (High)  
-- Provide automated tests:
-  - Unit tests for itinerary generation logic and input validation
-  - Integration tests for API endpoints (e.g., using Flask test client)
-- Aim for basic coverage (e.g., tests covering major paths and error handling).
-
-NFR-8 — Portability and deployment (Medium)  
-- The app must run on a typical development environment (Python 3.8+).  
-- Provide simple deployment instructions for a local environment and optionally for a basic PaaS (e.g., Gunicorn + Heroku/Render) or Dockerfile.
-
-NFR-9 — Scalability (Low)  
-- Design the app so that the business logic is stateless where possible to allow straightforward horizontal scaling in the future (e.g., storing state in DB rather than server memory).
-- No requirement to handle heavy production traffic.
-
-NFR-10 — Observability and logging (Medium)  
-- Log key operations with enough context to debug (request inputs, errors, external API failures) without leaking sensitive data.
-- Provide a simple log file or console logging configuration for development.
-
-NFR-11 — Extensibility (Medium)  
-- The design should allow future extensions: additional activity types, multi-day constraints, user accounts, richer transport/time scheduling, or switching to a different POI source.
-
-NFR-12 — Documentation and deliverables (High)  
-- Include: README, API docs (endpoints + example JSON), design notes describing the generation algorithm, and instructions to run tests.
+2.7 Logging and observability
+- Log API requests and validation failures at an appropriate level for debugging (do not log sensitive info).
+- Health endpoint and minimal metrics accessible to CI test scripts.
 
 ---
 
-Notes and constraints for coursework scope
-- The itinerary generator should be rule-based or template-driven; use of heavy external AI or paid APIs is optional and must be clearly documented.  
-- Keep external dependencies minimal. Prefer SQLite and small JS/CSS libraries (optional).  
-- Authentication and user accounts are out-of-scope unless you choose to implement a simple optional variant for demonstration.
+## 3. Testing and acceptance criteria
+
+3.1 Automated tests (pytest)
+- Unit tests for generation logic:
+  - Ensure interests are expanded into multiple concrete activities.
+  - Ensure activities rotate across days and time slots.
+  - Ensure itinerary array length equals `days`.
+  - Ensure activity titles and descriptions are strings and estimated_cost numeric.
+  - Ensure each day object contains day, morning, afternoon, evening, budget_note.
+- API integration tests:
+  - POST /api/itinerary returns HTTP 200 and response conforms to schema for valid requests.
+  - Invalid payloads return HTTP 400 with JSON error object.
+  - GET /health returns HTTP 200 with expected status.
+- Frontend tests (lightweight DOM checks):
+  - The served HTML contains stable IDs listed in 1.6.
+  - The served JS contains stable function names (basic presence checks).
+  - renderItinerary/renderDay/renderActivity produce readable text (can be tested with the Flask test client + BeautifulSoup to assert rendered strings for a known response).
+- Deterministic tests:
+  - Use seeding or deterministic mode in tests so expected values are reproducible.
+
+3.2 CI pipeline
+- CI runs:
+  - Code style checks (e.g., flake8, black optional).
+  - pytest suite (unit + integration + frontend DOM checks).
+  - Build step: docker build to verify Dockerfile correctness.
+  - Optional: run the container and perform a smoke test against /health and /api/itinerary.
+- CI must fail builds if tests fail.
+
+3.3 Acceptance criteria (end-to-end)
+- All tests must pass.
+- The frontend renders an itinerary for a sample request and meets the stable-ID/function contract.
+- The API strictly follows the request/response schemas and error rules.
+
+---
+
+## 4. Docker deployment
+
+4.1 Dockerfile
+- Provide a Dockerfile that builds a container with:
+  - Flask app and static frontend assets.
+  - All required Python dependencies installed.
+  - A single command to run the app (e.g., gunicorn or flask run for coursework).
+- The container must expose the configured port via environment variable (e.g., PORT) and default to 5000.
+
+4.2 docker-compose (optional but recommended)
+- Provide docker-compose.yml for local development/test:
+  - Service for the Flask app.
+  - Optional service for running tests (invoked by CI).
+
+4.3 Configuration via environment variables
+- Use environment variables for configuration (e.g., PORT, ITINERARY_SEED, FLASK_ENV) and avoid hard-coded secrets.
+
+4.4 Container acceptance checks
+- CI should build the Docker image and run it, then execute basic smoke tests:
+  - GET /health returns 200.
+  - POST /api/itinerary returns 200 and schema-valid response for a valid sample payload.
+
+---
+
+## 5. Constraints & clarifications (quality contract highlights)
+
+- Required endpoints: GET /health and POST /api/itinerary must exist.
+- POST /api/itinerary must accept destination, days, budget, interests, travel_style.
+- Success response MUST include: destination, days, budget, interests, travel_style, overview, itinerary, tips.
+- itinerary array length must equal days.
+- Activities must rotate morning/afternoon/evening using destination, day number, time slot, and interests; avoid repeating the same generic fallback every day/slot.
+- Interests must be expanded into multiple concrete activities before building the multi-day itinerary (so the user sees varied activities across days).
+- Activity titles/descriptions must be human-readable strings (never show [object Object]).
+- estimated_cost values must be numeric and adjusted by budget.
+- Each itinerary day must include day, morning, afternoon, evening, and budget_note.
+- Frontend must render readable fields and never display raw object serialisation; activity data may be structured objects but must be formatted for display.
+- Invalid input must return HTTP 400 with a JSON error object.
+- The generated frontend must not create its own image preview area — image integration is handled later by a separate image contract agent.
+- The generated frontend must include stable IDs: plannerForm, destination, days, budget, interests, travel_style, resultsContainer, daysContainer, formMessage, errorMessage.
+- The generated frontend must include stable functions: collectFormData, validateFormData, setLoading, showError, renderItinerary, renderDay, renderActivity, formatActivityText.
+- The code should be deterministic enough for pytest checks and Docker deployment (support seeding or deterministic behaviour).
+
+---
+
+If you want, I can also produce:
+- A JSON Schema example for request/response,
+- A small checklist for CI steps and pytest commands,
+- A minimal Flask app skeleton and frontend template that implements the above stable IDs and functions to be used as starter code.

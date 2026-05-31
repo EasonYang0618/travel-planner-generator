@@ -3,56 +3,54 @@
     {
       "id": "US1",
       "role": "Tourist",
-      "goal": "Enter a destination, trip length, budget level, and interests to generate a personalised day-by-day itinerary",
-      "benefit": "Receive a clear, feasible plan tailored to my time, budget and interests so I can make the most of the trip",
+      "goal": "Generate a personalized day-by-day city itinerary by entering destination, trip length, budget level, interests, and travel style",
+      "benefit": "Save planning time with a clear, ready-to-use itinerary tailored to my preferences",
       "acceptance_criteria": [
-        "Given valid destination, trip length (days), budget level and at least one interest, when I submit the form, then the system returns a day-by-day itinerary covering each day of the trip",
-        "Each day includes at least one recommended activity, approximate timing or duration, estimated cost and travel time between activities",
-        "If any required input is missing or invalid, the system returns a clear validation error and does not generate an itinerary"
+        "POST /api/itinerary accepts JSON body with keys: destination, days, budget, interests, travel_style and returns HTTP 200 on success",
+        "Successful response is JSON with top-level keys: destination, days, budget, interests, travel_style, overview, itinerary, and tips",
+        "The itinerary array length equals the numeric value of days in the request",
+        "Each itinerary day object includes keys: day, morning, afternoon, evening, and budget_note",
+        "Activity titles and descriptions are human-readable strings (no raw [object Object] text) and may be inside dictionaries but must render readable fields",
+        "Estimated costs are numeric values adjusted according to the budget input (not strings like low/medium/high)"
       ]
     },
     {
       "id": "US2",
-      "role": "Tourist",
-      "goal": "View the generated itinerary on the website with clear daily breakdown and activity details",
-      "benefit": "Easily read and follow the plan on my phone or laptop during the trip",
+      "role": "Backend Developer",
+      "goal": "Implement a stable Flask API contract that reliably generates itineraries and handles invalid input",
+      "benefit": "Provide a deterministic, testable backend that supports automated tests and Docker deployment",
       "acceptance_criteria": [
-        "The website displays the itinerary as a day-by-day list with activity names, descriptions, start times, durations and estimated costs",
-        "Each activity includes an address and a link to open the location on a map service",
-        "The itinerary page is responsive (usable on mobile and desktop) and supports printing"
+        "Expose GET /health that returns HTTP 200 and a JSON health object",
+        "Expose POST /api/itinerary following the input/output shape specified and return HTTP 400 with a JSON error object for invalid input",
+        "Itinerary generation is deterministic for identical inputs (same destination, days, budget, interests, travel_style) to allow automated pytest checks",
+        "Activities do not repeat the same generic fallback each day: morning/afternoon/evening selection rotates using destination, day number, time slot, and user interests",
+        "Before assembling the itinerary, each user interest is expanded into multiple concrete activities (e.g., food -> breakfast street-food lane, local market tasting, signature restaurant meal, dessert and tea stop, evening snack street)"
       ]
     },
     {
       "id": "US3",
-      "role": "Developer (API consumer)",
-      "goal": "Retrieve and submit itinerary generation requests programmatically via a Flask API",
-      "benefit": "Integrate itinerary generation with other services or automate workflows",
+      "role": "Frontend Developer",
+      "goal": "Build a website UI that collects user input, calls the Flask API, and displays a clear day-by-day itinerary",
+      "benefit": "Users can easily plan trips and view readable itineraries without developer intervention",
       "acceptance_criteria": [
-        "A POST /api/itineraries endpoint accepts JSON with destination, trip_length_days, budget_level and interests and returns structured JSON representing the day-by-day itinerary",
-        "Successful responses use HTTP 200 and include a machine-readable itinerary; validation errors use 4xx with descriptive messages",
-        "The API respects the same generation rules as the website (activity counts, timings, costs) and includes an identifier for saved itineraries"
+        "The frontend uses stable element IDs: plannerForm, destination, days, budget, interests, travel_style, resultsContainer, daysContainer, formMessage, and errorMessage",
+        "The frontend exposes stable functions: collectFormData, validateFormData, setLoading, showError, renderItinerary, renderDay, renderActivity, and formatActivityText",
+        "renderItinerary/renderDay/renderActivity produce human-readable text for each activity and never render [object Object]",
+        "The frontend must not create its own image preview area (image integration is handled later)",
+        "On API error or invalid input the frontend displays a JSON error message in errorMessage and uses HTTP 400 handling"
       ]
     },
     {
       "id": "US4",
-      "role": "Tourist",
-      "goal": "Save, edit and re-generate my itinerary after initial creation",
-      "benefit": "Customize the plan to my preferences and keep changes for later access",
+      "role": "Product Owner / QA",
+      "goal": "Ensure itineraries are diverse, thematic across days, and present realistic per-activity costs",
+      "benefit": "Deliver varied, useful itineraries that feel handcrafted and respect user budget",
       "acceptance_criteria": [
-        "I can save a generated itinerary to my account and retrieve it later by ID",
-        "I can edit activity details (time, remove/add activities) and either keep edits or request re-generation which preserves user edits where possible",
-        "Saved changes persist across sessions and are returned by both the web UI and API"
-      ]
-    },
-    {
-      "id": "US5",
-      "role": "Tourist",
-      "goal": "Export or share the itinerary (PDF/CSV/link) for offline use or sharing with companions",
-      "benefit": "Have a portable copy of the plan I can view without the app and easily share with others",
-      "acceptance_criteria": [
-        "The website/API offers export options: PDF and CSV of the full day-by-day itinerary",
-        "Exports include activity names, times, addresses and estimated costs and provide a shareable URL option",
-        "Exported PDFs are formatted for printing and CSVs are machine-readable with one row per activity including day and time"
+        "Each day should, where possible, have a distinct theme or planning focus (e.g., food day, outdoor day, cultural day)",
+        "Activities for the same interest are varied across days so a multi-day trip does not repetitively surface the same three activities",
+        "Activity allocation rotates across morning, afternoon, and evening so the same activity type is not always in the same timeslot",
+        "Budget notes per day explain cost context and are numeric adjustments reflected in per-activity estimated costs",
+        "Examples of interest expansions are implemented (food -> multiple concrete food activities; outdoor -> lakefront walk, city park, scenic viewpoint, nature trail)"
       ]
     }
   ]

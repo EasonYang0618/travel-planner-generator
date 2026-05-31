@@ -1,24 +1,51 @@
 @startuml
 actor User
-participant "Website" as Website
-participant "Flask API" as FlaskAPI
-participant "APIFree" as APIFree
+participant Website
+participant "Flask API" as API
+participant APIFree
 
-User -> Website: Submit travel preferences
+User -> Website : Submit travel preferences\ncollectFormData(plannerForm: destination, days, budget, interests, travel_style)
 activate Website
 
-Website -> FlaskAPI: POST /generate-itinerary\n(payload: preferences)
-activate FlaskAPI
+Website -> Website : validateFormData(data)
+alt invalid input (frontend)
+  Website -> User : showError(errorMessage)\n(errorMessage element id: errorMessage)
+  deactivate Website
+else valid input
+  Website -> Website : setLoading(true)\n(formMessage id: formMessage)
+  Website -> API : GET /health
+  activate API
+  API --> Website : 200 OK
+  deactivate API
 
-FlaskAPI -> APIFree: Call APIFree.generate(preferences)\n(request image + itinerary)
-activate APIFree
+  Website -> API : POST /api/itinerary\n{ destination, days, budget, interests, travel_style }
+  activate API
+  API -> API : expand interests into concrete activities\nrotate morning/afternoon/evening per day\nbuild itinerary list length == days\nensure each day has: day, morning, afternoon, evening, budget_note
+  alt API validation error
+    API --> Website : 400 Bad Request\n{ "error": "invalid input" }
+    deactivate API
 
-APIFree --> FlaskAPI: 200 OK\n{itinerary data, image (URL/base64)}
-deactivate APIFree
+    Website -> User : showError(errorMessage)
+    Website -> Website : setLoading(false)
+    deactivate Website
+  else successful itinerary
+    API --> Website : 200 OK\n{ destination, days, budget, interests, travel_style,\n  overview, itinerary: [ {day, morning:{title,description,cost}, afternoon:{...}, evening:{...}, budget_note}, ... ], tips }
+    deactivate API
 
-FlaskAPI --> Website: 200 OK\n{itinerary, image}
-deactivate FlaskAPI
+    Website -> Website : renderItinerary(itinerary)\n(render to resultsContainer/daysContainer)
+    Website -> Website : for each day:\nrenderDay(day) -> renderActivity(morning/afternoon/evening)\nformatActivityText(title, description, cost)
+    Website -> API : GET /api/image?query={destination}
+    activate API
+    API -> APIFree : Request image for destination
+    activate APIFree
+    APIFree --> API : image_url
+    deactivate APIFree
+    API --> Website : image_url
+    deactivate API
 
-Website --> User: Display generated itinerary\nand image
-deactivate Website
+    Website -> User : display itinerary and image\n(rendered into resultsContainer)
+    Website -> Website : setLoading(false)
+    deactivate Website
+  end
+end
 @enduml

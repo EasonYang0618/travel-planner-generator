@@ -1,112 +1,51 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8">
   <title>Travel Planner Generator</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
     :root{
-      --bg:#f6f8fa; --card:#fff; --muted:#6b7280; --accent:#0f62fe; --danger:#c53030; --success:#16a34a;
-      --maxw:980px;
-      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      color:#0b1220;
+      --bg:#f6f7fb; --card:#ffffff; --muted:#6b7280; --accent:#0f62fe; --danger:#c62828;
+      --radius:8px; font-family:Inter, Roboto, Arial, sans-serif;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      background:linear-gradient(180deg,#f8fafc, #eef2f7);
-      display:flex;
-      justify-content:center;
-      padding:28px 16px;
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
+    body{margin:0;background:var(--bg);color:#111;line-height:1.4}
+    .wrap{max-width:980px;margin:28px auto;padding:20px}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:360px 1fr;gap:18px}
+    form#plannerForm{background:var(--card);padding:18px;border-radius:var(--radius);box-shadow:0 6px 18px rgba(12,20,40,0.06)}
+    .field{display:flex;flex-direction:column;margin-bottom:12px}
+    label{font-size:13px;color:#111;margin-bottom:6px}
+    input[type=text], input[type=number], select, textarea{
+      padding:10px;border:1px solid #e6e9ee;border-radius:6px;font-size:14px;background:#fff;
     }
-    .container{
-      width:100%;
-      max-width:var(--maxw);
-    }
-    header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:20px;
-    }
-    .brand{
-      display:flex;
-      gap:12px;
-      align-items:center;
-    }
-    .logo{
-      width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#5aa6ff);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px;
-      box-shadow:0 6px 18px rgba(15,98,254,0.12);
-    }
-    h1{font-size:18px;margin:0}
-    nav{display:flex;gap:8px}
-    .nav-btn{
-      background:transparent;border:1px solid transparent;padding:8px 12px;border-radius:8px;color:var(--muted);cursor:pointer;font-weight:600;
-    }
-    .nav-btn[aria-current="true"], .nav-btn:hover{color:var(--accent);border-color:rgba(15,98,254,0.08);background:rgba(15,98,254,0.03)}
-    main{
-      display:grid;
-      grid-template-columns:1fr 420px;
-      gap:18px;
-      align-items:start;
-    }
-    @media (max-width:960px){ main{grid-template-columns:1fr} }
-    .card{
-      background:var(--card);padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(12,20,30,0.06);
-    }
-    form .row{display:flex;gap:8px}
-    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-    input[type="text"], input[type="number"], select, textarea{
-      width:100%;padding:10px 12px;border-radius:8px;border:1px solid #e6e9ee;background:#fff;font-size:14px;
-    }
-    select[multiple]{height:120px}
-    .field{margin-bottom:12px}
-    .actions{display:flex;gap:8px;align-items:center;margin-top:4px}
-    button.primary{
-      background:var(--accent);color:#fff;padding:10px 14px;border-radius:8px;border:0;font-weight:600;cursor:pointer;
-      box-shadow:0 6px 18px rgba(15,98,254,0.12);
-    }
-    button.ghost{background:transparent;border:1px solid #e6e9ee;padding:9px 12px;border-radius:8px;cursor:pointer;color:var(--muted)}
-    .small{font-size:13px;color:var(--muted)}
-    .hint{font-size:12px;color:#8b98a7;margin-top:4px}
-    .error{color:var(--danger);font-size:13px;margin-top:6px}
-    .status{padding:10px;border-radius:8px;margin-bottom:12px;font-weight:600}
-    .loading{background:#fff6e6;color:#9a6700;border:1px solid #fde3bf}
-    .success{background:#ecfdf5;color:var(--success);border:1px solid rgba(16,185,129,0.12)}
-    .failure{background:#fff6f6;color:var(--danger);border:1px solid rgba(197,48,48,0.08)}
-    .result-header{display:flex;justify-content:space-between;align-items:center;gap:12px}
-    .result-title{margin:0;font-size:16px}
-    .meta{font-size:13px;color:var(--muted)}
-    .itinerary{
-      margin-top:12px;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-    .day{
-      border:1px solid #eef2f7;padding:12px;border-radius:10px;background:linear-gradient(180deg,#fff,#fcfdff);
-    }
-    .day h3{margin:0 0 6px 0;font-size:14px}
-    .activity{
-      display:flex;justify-content:space-between;gap:10px;padding:8px;border-radius:8px;background:#fbfdff;border:1px solid #f1f5f9;margin-bottom:8px;
-    }
-    .act-left{flex:1}
-    .act-title{font-weight:600;font-size:14px;margin-bottom:4px}
-    .act-meta{font-size:13px;color:var(--muted)}
-    .act-cost{min-width:88px;text-align:right;font-weight:600}
-    .controls{display:flex;gap:8px;align-items:center}
-    .recent-list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
-    .recent-item{display:flex;justify-content:space-between;gap:8px;padding:10px;border-radius:8px;border:1px solid #eef2f7;background:#fff;align-items:center}
-    .muted{color:var(--muted)}
-    footer{margin-top:18px;padding:12px 0;text-align:center;font-size:13px;color:var(--muted)}
-    .spinner{width:18px;height:18px;border-radius:50%;border:3px solid rgba(0,0,0,0.08);border-top-color:var(--accent);animation:spin 1s linear infinite;display:inline-block;vertical-align:middle}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .print-hide{display:inline}
-    @media print{ .print-hide{display:none} body{background:#fff;padding:0} header, nav, .controls, .recent-list, footer{display:none} main{grid-template-columns:1fr} .card{box-shadow:none;border-radius:0;padding:0} .itinerary .day{border:0;padding:6px}}
+    select[multiple]{height:110px}
+    .hint{font-size:12px;color:var(--muted);margin-top:4px}
+    .actions{display:flex;gap:8px;align-items:center;margin-top:8px}
+    button.primary{background:var(--accent);color:#fff;padding:10px 12px;border-radius:6px;border:0;cursor:pointer}
+    button.secondary{background:transparent;border:1px solid #e6e9ee;padding:9px 12px;border-radius:6px;cursor:pointer}
+    .results{background:var(--card);padding:18px;border-radius:var(--radius);box-shadow:0 6px 18px rgba(12,20,40,0.04)}
+    .state{display:none}
+    .state.active{display:block}
+    #itTitle{font-weight:700;font-size:18px;margin-bottom:6px}
+    #itMeta{color:var(--muted);font-size:13px;margin-bottom:12px}
+    #overview{margin-bottom:12px;color:#222}
+    #daysContainer{display:flex;flex-direction:column;gap:12px}
+    .dayCard{border:1px solid #eef1f6;padding:12px;border-radius:8px;background:#fafbff}
+    .dayHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .slot{display:flex;flex-direction:column;padding:8px;border-radius:6px;background:#fff;border:1px solid #f1f3f7}
+    .slot + .slot{margin-top:8px}
+    .slotLabel{font-size:12px;color:var(--muted);margin-bottom:6px}
+    .slotText{font-size:14px}
+    #budgetNotes{margin-top:12px;color:var(--muted);font-size:13px}
+    #tipsArea{margin-top:10px}
+    .tip{font-size:13px;padding:8px 10px;border-left:3px solid #e6edf9;background:#fbfdff;margin-bottom:6px}
+    #formMessage{margin-top:10px;color:var(--muted);font-size:13px}
+    #errorMessage{color:var(--danger);font-size:13px}
+    footer{margin-top:18px;font-size:12px;color:var(--muted)}
+    @media (max-width:860px){ .grid{grid-template-columns:1fr; } form#plannerForm{order:2} .results{order:1} }
   </style>
 
 <style id="ai-image-showcase-style">
@@ -123,20 +62,12 @@
 
 </head>
 <body>
-  <div class="container" id="appRoot">
+  <div class="wrap">
     <header>
-      <div class="brand" role="banner">
-        <div class="logo" aria-hidden="true">TP</div>
-        <div>
-          <h1>Travel Planner Generator</h1>
-          <div class="small muted">Generate practical, day-by-day itineraries</div>
-        </div>
+      <div>
+        <h1>Travel Planner Generator</h1>
+        <p class="lead">Generate concise, day-by-day itineraries tailored to destination, budget and interests.</p>
       </div>
-      <nav role="navigation" aria-label="Primary">
-        <button class="nav-btn" data-view="form" aria-current="true">Plan</button>
-        <button class="nav-btn" data-view="recent">Recent</button>
-        <button class="nav-btn" data-view="help">Help</button>
-      </nav>
     </header>
 
 <section id="aiImageShowcase" class="ai-image-showcase" aria-label="AI generated travel images">
@@ -155,633 +86,348 @@
 </section>
 
 
-    <main>
-      <section class="card" id="formView" aria-labelledby="formTitle">
-        <h2 id="formTitle" style="margin:0 0 10px 0;font-size:16px">Trip details</h2>
+    <div class="grid">
+      <form id="plannerForm" aria-labelledby="formTitle">
+        <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <strong id="formTitle">Itinerary input</strong>
+          <div id="formMessage" aria-live="polite"></div>
+        </div>
 
-        <div id="statusArea" aria-live="polite"></div>
+        <div class="field">
+          <label for="destination">Destination</label>
+          <input id="destination" name="destination" type="text" placeholder="City, e.g. Porto" required />
+        </div>
 
-        <form id="plannerForm" novalidate>
-          <div class="field">
-            <label for="destination">Destination <span class="muted" aria-hidden="true">•</span></label>
-            <input id="destination" name="destination" type="text" autocomplete="off" required placeholder="City name (e.g. Lisbon)" />
-            <div class="error" id="error-destination" hidden></div>
-          </div>
+        <div class="field">
+          <label for="days">Days</label>
+          <input id="days" name="days" type="number" min="1" value="3" required />
+          <div class="hint">Enter whole number of days (min 1)</div>
+        </div>
 
-          <div class="row">
-            <div class="field" style="flex:0 0 140px">
-              <label for="days">Days</label>
-              <input id="days" name="days" type="number" min="1" max="30" value="3" required />
-              <div class="error" id="error-days" hidden></div>
-            </div>
+        <div class="field">
+          <label for="budget">Budget (1=low, 5=high)</label>
+          <input id="budget" name="budget" type="number" min="1" max="5" value="3" />
+        </div>
 
-            <div class="field" style="flex:1">
-              <label for="budget">Budget level</label>
-              <select id="budget" name="budget" required>
-                <option value="">Choose...</option>
-                <option value="low">Low</option>
-                <option value="medium" selected>Medium</option>
-                <option value="high">High</option>
-              </select>
-              <div class="error" id="error-budget" hidden></div>
-            </div>
-          </div>
+        <div class="field">
+          <label for="interests">Interests (select one or more)</label>
+          <select id="interests" name="interests" multiple>
+            <option value="food">Food</option>
+            <option value="history">History</option>
+            <option value="outdoor">Outdoor</option>
+            <option value="art">Art & Museums</option>
+            <option value="nightlife">Nightlife</option>
+            <option value="shopping">Shopping</option>
+          </select>
+          <div class="hint">Use Ctrl/Cmd or Shift to select multiple</div>
+        </div>
 
-          <div class="field">
-            <label for="interests">Interests</label>
-            <select id="interests" name="interests" multiple aria-label="Select interests">
-              <option value="culture">Culture</option>
-              <option value="food">Food</option>
-              <option value="museums">Museums</option>
-              <option value="outdoors">Outdoors</option>
-              <option value="nightlife">Nightlife</option>
-              <option value="shopping">Shopping</option>
-            </select>
-            <div class="small hint">Hold Ctrl / Cmd to select multiple. At least one required.</div>
-            <div class="error" id="error-interests" hidden></div>
-          </div>
+        <div class="field">
+          <label for="travel_style">Travel style</label>
+          <select id="travel_style" name="travel_style">
+            <option value="balanced">Balanced</option>
+            <option value="relaxed">Relaxed</option>
+            <option value="active">Active</option>
+          </select>
+        </div>
 
-          <div class="row" style="align-items:end">
-            <div class="field" style="flex:1">
-              <label for="travel_style">Travel style</label>
-              <select id="travel_style" name="travel_style">
-                <option value="relaxed">Relaxed</option>
-                <option value="balanced" selected>Balanced</option>
-                <option value="active">Active</option>
-              </select>
-            </div>
+        <div class="actions">
+          <button type="submit" class="primary">Generate itinerary</button>
+          <button type="button" class="secondary" id="resetBtn">Reset</button>
+        </div>
+      </form>
 
-            <div class="field" style="flex:0 0 160px">
-              <label for="mobility">Mobility</label>
-              <select id="mobility" name="mobility">
-                <option value="public">Public transport</option>
-                <option value="walking">Walking</option>
-                <option value="private">Private / mixed</option>
-              </select>
-            </div>
-          </div>
+      <section class="results" id="resultsContainer" aria-live="polite">
+        <div id="idleState" class="state active">
+          <strong>Ready</strong>
+          <div style="margin-top:8px;color:var(--muted)">Fill the form and click "Generate itinerary" to receive a clear, day-by-day plan.</div>
+        </div>
 
-          <div class="field">
-            <label for="notes">Optional notes</label>
-            <textarea id="notes" name="notes" rows="2" placeholder="Any constraints or must-see items (optional)"></textarea>
-          </div>
+        <div id="loadingState" class="state">
+          <strong>Generating itinerary…</strong>
+          <div style="margin-top:8px;color:var(--muted)" id="loadingMessage">Please wait while we prepare your itinerary.</div>
+        </div>
 
-          <div class="actions">
-            <button type="submit" class="primary" id="generateBtn">
-              <span id="generateBtnLabel">Generate itinerary</span>
-              <span id="btnSpinner" style="margin-left:8px;display:none" role="status" aria-hidden="true"><span class="spinner"></span></span>
-            </button>
-            <button type="button" class="ghost" id="resetBtn">Reset</button>
-            <div class="small muted" style="margin-left:auto">Results are generated and may be saved to server/local session.</div>
-          </div>
-        </form>
+        <div id="itineraryState" class="state" role="region" aria-labelledby="itTitle">
+          <div id="itTitle"></div>
+          <div id="itMeta"></div>
+          <div id="overview"></div>
 
-        <div id="resultArea" style="margin-top:14px"></div>
+          <div id="daysContainer"></div>
+
+          <div id="budgetNotes"></div>
+
+          <div id="tipsArea"></div>
+        </div>
+
+        <div id="errorState" class="state">
+          <strong style="color:var(--danger)">Error</strong>
+          <div id="errorMessage" role="alert"></div>
+        </div>
       </section>
-
-      <aside>
-        <div class="card" id="rightPanel">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div>
-              <h3 style="margin:0;font-size:15px">Recent & saved</h3>
-              <div class="small muted">Session and server items</div>
-            </div>
-            <div class="controls">
-              <button class="ghost" id="refreshRecent">Refresh</button>
-              <button class="ghost" id="clearLocal">Clear local</button>
-            </div>
-          </div>
-
-          <div id="recentLists">
-            <div style="margin-top:10px">
-              <div class="small muted">From server</div>
-              <div id="serverRecent" class="recent-list" aria-live="polite"></div>
-            </div>
-
-            <div style="margin-top:12px">
-              <div class="small muted">Local</div>
-              <div id="localRecent" class="recent-list" aria-live="polite"></div>
-            </div>
-          </div>
-
-          <div style="margin-top:12px" class="small muted">
-            Click an item to view or export. Local items use browser storage and persist per device.
-          </div>
-        </div>
-
-        <div class="card" style="margin-top:12px">
-          <h4 style="margin:0 0 8px 0">Quick actions</h4>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="ghost" id="downloadSample">Download sample JSON</button>
-            <button class="ghost" id="printLast">Print last result</button>
-          </div>
-        </div>
-      </aside>
-    </main>
+    </div>
 
     <footer>
-      Built for coursework — simple, exportable itineraries • No images or external maps included
+      <div>Service: local Flask + generator. Use /health and POST /api/itinerary for API access.</div>
     </footer>
   </div>
 
   <script>
-    // Minimal client-side app for the Travel Planner Generator
-    (function () {
-      // Utility
-      const qs = (s, el=document) => el.querySelector(s);
-      const qsa = (s, el=document) => Array.from(el.querySelectorAll(s));
-      const toISO = (d=Date.now()) => new Date(d).toISOString().replace(/[:.]/g,'-');
+    // Collects form values and returns an object with the required keys.
+    function collectFormData(){
+      const dest = String(document.getElementById('destination').value || '').trim();
+      const daysVal = Number(document.getElementById('days').value);
+      const budgetVal = Number(document.getElementById('budget').value);
+      const sel = document.getElementById('interests');
+      const interests = Array.from(sel && sel.options ? sel.selectedOptions : []).map(o => o.value).filter(Boolean);
+      const travel_style = String(document.getElementById('travel_style').value || '').trim();
+      return { destination: dest, days: daysVal, budget: budgetVal, interests: interests, travel_style: travel_style };
+    }
 
-      // Elements
-      const navBtns = qsa('.nav-btn');
-      const formView = qs('#formView');
-      const plannerForm = qs('#plannerForm');
-      const statusArea = qs('#statusArea');
-      const generateBtn = qs('#generateBtn');
-      const generateBtnLabel = qs('#generateBtnLabel');
-      const btnSpinner = qs('#btnSpinner');
-      const resultArea = qs('#resultArea');
-      const serverRecent = qs('#serverRecent');
-      const localRecent = qs('#localRecent');
-      const refreshRecentBtn = qs('#refreshRecent');
-      const clearLocalBtn = qs('#clearLocal');
-      const resetBtn = qs('#resetBtn');
-      const downloadSampleBtn = qs('#downloadSample');
-      const printLastBtn = qs('#printLast');
-
-      // State
-      let lastItinerary = null;
-      const LOCAL_KEY = 'tp_local_itineraries_v1';
-
-      // Navigation
-      navBtns.forEach(b => b.addEventListener('click', (e)=>{
-        navBtns.forEach(nb=>nb.removeAttribute('aria-current'));
-        b.setAttribute('aria-current','true');
-        const view = b.getAttribute('data-view');
-        switch(view){
-          case 'form':
-            formView.scrollIntoView({behavior:'smooth'});
-            break;
-          case 'recent':
-            window.scrollTo({top:0,behavior:'smooth'});
-            fetchRecents();
-            break;
-          case 'help':
-            showHelp();
-            break;
-        }
-      }));
-
-      // Inline validation helpers
-      function showFieldError(fieldId, msg){
-        const el = qs('#error-'+fieldId);
-        if(el){ el.textContent = msg; el.hidden = false; }
+    // Validates destination is present and days is a positive integer.
+    function validateFormData(data){
+      const err = [];
+      if (!data.destination) err.push('Destination is required.');
+      if (!Number.isInteger(data.days) || data.days < 1) err.push('Days must be an integer >= 1.');
+      if (err.length){
+        showError(err.join(' '));
+        return false;
       }
-      function clearFieldError(fieldId){
-        const el = qs('#error-'+fieldId);
-        if(el){ el.textContent = ''; el.hidden = true; }
-      }
-      function clearAllErrors(){
-        ['destination','days','budget','interests'].forEach(clearFieldError);
+      // Clear previous error if any
+      const errorEl = document.getElementById('errorState');
+      if (errorEl) errorEl.classList.remove('active');
+      document.getElementById('formMessage').textContent = '';
+      return true;
+    }
+
+    // Toggle loading UI with optional message.
+    function setLoading(isLoading, message=""){
+      document.getElementById('idleState').classList.toggle('active', !isLoading);
+      document.getElementById('loadingState').classList.toggle('active', isLoading);
+      document.getElementById('itineraryState').classList.remove('active');
+      document.getElementById('errorState').classList.remove('active');
+      document.getElementById('loadingMessage').textContent = message || 'Please wait while we prepare your itinerary.';
+    }
+
+    // Show an error message in the error area.
+    function showError(message){
+      const errEl = document.getElementById('errorState');
+      const errMsg = document.getElementById('errorMessage');
+      errMsg.textContent = String(message || 'An error occurred.');
+      errEl.classList.add('active');
+      document.getElementById('idleState').classList.remove('active');
+      document.getElementById('loadingState').classList.remove('active');
+      document.getElementById('itineraryState').classList.remove('active');
+    }
+
+    // Render a full itinerary response into the UI.
+    function renderItinerary(data){
+      // Defensive checks
+      if (!data || typeof data !== 'object'){
+        showError('Invalid API response.');
+        return;
       }
 
-      // Form submit
-      plannerForm.addEventListener('submit', async function(e){
-        e.preventDefault();
-        clearAllErrors();
-        statusArea.innerHTML = '';
-        const form = new FormData(plannerForm);
-        const destination = (form.get('destination') || '').trim();
-        const days = parseInt(form.get('days'), 10);
-        const budget = form.get('budget');
-        const travel_style = form.get('travel_style') || 'balanced';
-        const mobility = form.get('mobility') || '';
-        const notes = (form.get('notes') || '').trim();
-        // interests: multiple select
-        const interestsSelect = qs('#interests');
-        const interests = Array.from(interestsSelect.selectedOptions).map(o=>o.value);
+      // Top meta
+      const titleEl = document.getElementById('itTitle');
+      const metaEl = document.getElementById('itMeta');
+      titleEl.textContent = `Itinerary for ${data.destination || 'your destination'}`;
+      metaEl.textContent = `${data.days} day(s) • Budget: ${data.budget} • Style: ${data.travel_style}`;
 
-        // Client-side validation
-        let invalid = false;
-        if(!destination){ showFieldError('destination','Destination is required'); invalid=true; }
-        if(!Number.isInteger(days) || days < 1 || days > 30){ showFieldError('days','Enter days between 1 and 30'); invalid=true; }
-        if(!budget){ showFieldError('budget','Select a budget level'); invalid=true; }
-        if(interests.length === 0){ showFieldError('interests','Select at least one interest'); invalid=true; }
-        if(invalid){ return; }
+      // Overview
+      const overviewEl = document.getElementById('overview');
+      overviewEl.textContent = data.overview || 'Overview not provided.';
 
-        // Compose payload
-        const payload = { destination, days, budget, interests, travel_style };
-        // include optional
-        if(mobility) payload.mobility = mobility;
-        if(notes) payload.notes = notes;
-
-        // UI loading state
-        setLoading(true, 'Generating itinerary — please wait');
-        try {
-          const resp = await fetch('/api/itinerary', {
-            method:'POST',
-            headers:{ 'Content-Type':'application/json' },
-            body: JSON.stringify(payload),
-            credentials: 'same-origin'
-          });
-
-          if(!resp.ok){
-            // Try to extract server validation message
-            let body;
-            try { body = await resp.json(); } catch(e){ body = null; }
-            const msg = (body && body.error) ? body.error : `Server returned ${resp.status}`;
-            setFailure(msg);
-            setLoading(false);
-            return;
-          }
-
-          const data = await resp.json();
-          setLoading(false);
-          setSuccess('Itinerary generated');
-          renderItinerary(data);
-          lastItinerary = data;
-          saveLocalItem(data);
-          // Try to refresh server recents
-          fetchServerRecents().catch(()=>{/*silent*/});
-        } catch (err) {
-          setLoading(false);
-          setFailure('Network error: ' + (err.message || 'request failed'));
-        }
+      // Days
+      const container = document.getElementById('daysContainer');
+      container.innerHTML = '';
+      const daysList = Array.isArray(data.itinerary) ? data.itinerary : [];
+      daysList.forEach(day => {
+        const node = renderDay(day);
+        container.appendChild(node);
       });
 
-      // UI state helpers
-      function setLoading(on, message){
-        if(on){
-          statusArea.innerHTML = `<div class="status loading" role="status">${message}</div>`;
-          generateBtn.disabled = true;
-          btnSpinner.style.display = 'inline-block';
-        } else {
-          statusArea.innerHTML = '';
-          generateBtn.disabled = false;
-          btnSpinner.style.display = 'none';
-        }
-      }
-      function setSuccess(message){
-        statusArea.innerHTML = `<div class="status success" role="status">${message}</div>`;
-        setTimeout(()=>{ if(statusArea) statusArea.innerHTML = ''; }, 2500);
-      }
-      function setFailure(message){
-        statusArea.innerHTML = `<div class="status failure" role="alert">${message}</div>`;
+      // Budget notes
+      const budgetNotes = document.getElementById('budgetNotes');
+      if (data.itinerary && data.itinerary.length){
+        const totalNotes = data.itinerary.map(d => (d && d.budget_note) ? String(d.budget_note) : '').filter(Boolean).join(' | ');
+        budgetNotes.textContent = totalNotes ? `Daily budget notes: ${totalNotes}` : (data.budget ? `Budget level: ${data.budget}` : '');
+      } else {
+        budgetNotes.textContent = data.budget ? `Budget level: ${data.budget}` : '';
       }
 
-      // Rendering itinerary data
-      function renderItinerary(data){
-        // Accept various shapes; prefer top-level fields as per contract
-        const dest = data.destination || data.city || '';
-        const overview = data.overview || '';
-        const tips = data.tips || (data.recommendations || []).join('; ');
-        // itinerary can be in data.itinerary, data.day_plan, data.itinerary.day_plan
-        let plan = [];
-        if(Array.isArray(data.itinerary)) plan = data.itinerary;
-        else if(Array.isArray(data.day_plan)) plan = data.day_plan;
-        else if(data.itinerary && Array.isArray(data.itinerary.day_plan)) plan = data.itinerary.day_plan;
-        else if(data.itinerary && Array.isArray(data.itinerary.days)) plan = data.itinerary.days;
-        // If still empty but API returned morning/afternoon/evening fields directly keyed by day number...
-        // We'll attempt to use a fallback: if data has "days" number and some structure, create generic days
-        const daysCount = Number(data.days) || (plan.length || 0);
-        if(plan.length === 0 && daysCount > 0){
-          // Try to create empty day shells if overview contains suggestions.
-          for(let i=1;i<=daysCount;i++){
-            plan.push({ day_number: i, morning: null, afternoon: null, evening: null, activities: [] });
-          }
-        }
-
-        // Build HTML
-        const container = document.createElement('div');
-        container.className = 'result card';
-        const header = document.createElement('div');
-        header.className = 'result-header';
-        const title = document.createElement('div');
-        title.innerHTML = `<h3 class="result-title">${escapeHtml(dest || 'Itinerary')}</h3><div class="meta">${daysCount} day(s) • ${data.budget || data.budget_level || ''} • ${Array.isArray(data.interests)?data.interests.join(', '):''}</div>`;
-        header.appendChild(title);
-
-        const controls = document.createElement('div');
-        controls.className = 'controls';
-        const downloadBtn = document.createElement('button');
-        downloadBtn.className = 'ghost print-hide';
-        downloadBtn.textContent = 'Export JSON';
-        downloadBtn.addEventListener('click', ()=> downloadJson(data));
-        const printBtn = document.createElement('button');
-        printBtn.className = 'ghost print-hide';
-        printBtn.textContent = 'Print';
-        printBtn.addEventListener('click', ()=> window.print());
-        controls.appendChild(downloadBtn);
-        controls.appendChild(printBtn);
-        header.appendChild(controls);
-
-        container.appendChild(header);
-
-        if(overview){
-          const ov = document.createElement('p');
-          ov.className = 'small muted';
-          ov.style.marginTop = '10px';
-          ov.textContent = overview;
-          container.appendChild(ov);
-        }
-
-        // Itinerary list
-        const itinWrap = document.createElement('div');
-        itinWrap.className = 'itinerary';
-
-        for(let i=0;i<plan.length;i++){
-          const dayObj = plan[i] || {};
-          const dayNum = dayObj.day_number || (i+1);
-          const dayEl = document.createElement('div');
-          dayEl.className = 'day';
-          const dayHeader = document.createElement('h3');
-          dayHeader.textContent = 'Day ' + dayNum;
-          dayEl.appendChild(dayHeader);
-
-          // If activities array exists and non-empty use it
-          if(Array.isArray(dayObj.activities) && dayObj.activities.length>0){
-            dayObj.activities.forEach(act => {
-              dayEl.appendChild(renderActivity(act));
-            });
-            // daily summary if provided
-            if(dayObj.daily_total_cost || dayObj.total_cost){
-              const sum = document.createElement('div');
-              sum.className = 'muted';
-              sum.textContent = `Estimated total: ${dayObj.daily_total_cost || dayObj.total_cost}`;
-              dayEl.appendChild(sum);
-            }
-          } else {
-            // Look for morning/afternoon/evening blocks
-            const blocks = ['morning','afternoon','evening'];
-            let anyBlock = false;
-            blocks.forEach(block=>{
-              const content = dayObj[block];
-              if(content){
-                anyBlock = true;
-                const blockEl = document.createElement('div');
-                blockEl.style.marginBottom = '8px';
-                const btitle = document.createElement('div');
-                btitle.className = 'act-title';
-                btitle.textContent = block[0].toUpperCase()+block.slice(1);
-                blockEl.appendChild(btitle);
-                const desc = document.createElement('div');
-                desc.className = 'act-meta';
-                if(typeof content === 'string'){
-                  desc.textContent = content;
-                } else if (Array.isArray(content)){
-                  desc.textContent = content.join(' • ');
-                } else if (content.name){
-                  desc.textContent = content.name + (content.description ? ' — '+content.description : '');
-                } else {
-                  desc.textContent = JSON.stringify(content).slice(0,140);
-                }
-                blockEl.appendChild(desc);
-                dayEl.appendChild(blockEl);
-              }
-            });
-            if(!anyBlock){
-              // If no blocks, show a fallback message
-              const fallback = document.createElement('div');
-              fallback.className = 'muted';
-              fallback.textContent = 'No scheduled activities for this day.';
-              dayEl.appendChild(fallback);
-            }
-          }
-
-          itinWrap.appendChild(dayEl);
-        }
-
-        container.appendChild(itinWrap);
-
-        // Budget notes and tips
-        if(data.budget_notes || data.budget || data.tips){
-          const notes = document.createElement('div');
-          notes.style.marginTop = '10px';
-          if(data.budget_notes){
-            const b = document.createElement('div');
-            b.innerHTML = `<strong>Budget notes:</strong> <span class="muted">${escapeHtml(data.budget_notes)}</span>`;
-            notes.appendChild(b);
-          }
-          if(tips){
-            const t = document.createElement('div');
-            t.style.marginTop='6px';
-            t.innerHTML = `<strong>Tips:</strong> <span class="muted">${escapeHtml(tips)}</span>`;
-            notes.appendChild(t);
-          }
-          container.appendChild(notes);
-        }
-
-        // Replace result area
-        resultArea.innerHTML = '';
-        resultArea.appendChild(container);
-      }
-
-      function renderActivity(act){
-        const el = document.createElement('div');
-        el.className = 'activity';
-        const left = document.createElement('div');
-        left.className = 'act-left';
-        const title = document.createElement('div');
-        title.className = 'act-title';
-        title.textContent = act.name || act.title || 'Activity';
-        left.appendChild(title);
-        const meta = document.createElement('div');
-        meta.className = 'act-meta';
-        const parts = [];
-        if(act.type) parts.push(cap(act.type));
-        if(act.start_time) parts.push('Starts: '+act.start_time);
-        if(act.est_duration_minutes) parts.push('Duration: '+Math.round(act.est_duration_minutes/60*10)/10+'h');
-        if(act.location && act.location.address) parts.push(act.location.address);
-        meta.textContent = parts.join(' • ');
-        left.appendChild(meta);
-
-        const cost = document.createElement('div');
-        cost.className = 'act-cost';
-        cost.textContent = (act.est_cost!=null) ? formatCurrency(act.est_cost) : (act.cost || '');
-
-        el.appendChild(left);
-        el.appendChild(cost);
-        return el;
-      }
-
-      // Helpers: sanitize, formatting
-      function escapeHtml(s){
-        if(!s) return '';
-        return String(s).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]; });
-      }
-      function cap(s){ return s ? String(s).charAt(0).toUpperCase()+String(s).slice(1) : s; }
-      function formatCurrency(v){
-        try { return (typeof v === 'number') ? (v>=1000?('$'+Math.round(v)) : '$'+v) : String(v); }
-        catch(e){ return String(v); }
-      }
-
-      // Local storage for recents
-      function saveLocalItem(data){
-        try {
-          const store = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
-          const item = {
-            id: data.itinerary_id || data.id || ('local-'+toISO()),
-            destination: data.destination || data.city || '',
-            created_at: data.created_at || new Date().toISOString(),
-            summary: data.overview || '',
-            payload: data
-          };
-          // Unshift, keep last 10
-          store.unshift(item);
-          const newStore = store.slice(0,10);
-          localStorage.setItem(LOCAL_KEY, JSON.stringify(newStore));
-          renderLocalList();
-        } catch(e){ /* ignore */ }
-      }
-      function loadLocalStore(){ try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); } catch(e){ return []; } }
-      function renderLocalList(){
-        const items = loadLocalStore();
-        localRecent.innerHTML = '';
-        if(items.length === 0){
-          localRecent.innerHTML = `<div class="small muted">No local items</div>`;
-          return;
-        }
-        items.forEach(it=>{
-          const row = document.createElement('div');
-          row.className = 'recent-item';
-          const left = document.createElement('div');
-          left.style.flex='1';
-          left.innerHTML = `<div style="font-weight:600">${escapeHtml(it.destination)}</div><div class="small muted">${new Date(it.created_at).toLocaleString()}</div>`;
-          const actions = document.createElement('div');
-          actions.style.display='flex'; actions.style.gap='8px';
-          const view = document.createElement('button'); view.className='ghost'; view.textContent='View';
-          view.addEventListener('click', ()=> {
-            renderItinerary(it.payload);
-            lastItinerary = it.payload;
-            // Jump to results
-            resultArea.scrollIntoView({behavior:'smooth'});
-          });
-          const dl = document.createElement('button'); dl.className='ghost'; dl.textContent='Export';
-          dl.addEventListener('click', ()=> downloadJson(it.payload, it.id));
-          actions.appendChild(view); actions.appendChild(dl);
-          row.appendChild(left); row.appendChild(actions);
-          localRecent.appendChild(row);
+      // Tips
+      const tipsArea = document.getElementById('tipsArea');
+      tipsArea.innerHTML = '';
+      if (Array.isArray(data.tips) && data.tips.length){
+        data.tips.forEach(t => {
+          const tip = document.createElement('div');
+          tip.className = 'tip';
+          tip.textContent = String(t || '').trim() || 'Tip: plan transit time between activities.';
+          tipsArea.appendChild(tip);
         });
       }
 
-      // Server recents (best-effort)
-      async function fetchServerRecents(){
-        serverRecent.innerHTML = `<div class="small muted">Loading…</div>`;
-        try {
-          const resp = await fetch('/api/itineraries', { credentials: 'same-origin' });
-          if(!resp.ok){
-            serverRecent.innerHTML = `<div class="small muted">No server items</div>`;
-            return;
-          }
-          const data = await resp.json();
-          // Expect array
-          const list = Array.isArray(data) ? data : (data.items || []);
-          serverRecent.innerHTML = '';
-          if(list.length === 0){
-            serverRecent.innerHTML = `<div class="small muted">No server items</div>`;
-            return;
-          }
-          list.slice(0,8).forEach(item => {
-            const rid = item.itinerary_id || item.id || '';
-            const row = document.createElement('div'); row.className='recent-item';
-            row.innerHTML = `<div style="flex:1"><div style="font-weight:600">${escapeHtml(item.destination||'')}</div><div class="small muted">${new Date(item.created_at||Date.now()).toLocaleString()}</div></div>`;
-            const right = document.createElement('div'); right.style.display='flex'; right.style.gap='8px';
-            const view = document.createElement('button'); view.className='ghost'; view.textContent='View';
-            view.addEventListener('click', async ()=> {
-              try {
-                const r = await fetch('/api/itineraries/'+encodeURIComponent(rid)); // GET one
-                if(!r.ok) { setFailure('Unable to load item'); return; }
-                const data = await r.json();
-                renderItinerary(data);
-                lastItinerary = data;
-                saveLocalItem(data);
-                resultArea.scrollIntoView({behavior:'smooth'});
-              } catch(e){ setFailure('Failed to fetch item'); }
-            });
-            const dl = document.createElement('button'); dl.className='ghost'; dl.textContent='Export';
-            dl.addEventListener('click', ()=> {
-              // Attempt to fetch full then download
-              fetch('/api/itineraries/'+encodeURIComponent(rid)).then(r=>r.json()).then(d=>downloadJson(d,rid)).catch(()=>setFailure('Failed to export'));
-            });
-            right.appendChild(view); right.appendChild(dl);
-            row.appendChild(right);
-            serverRecent.appendChild(row);
-          });
-        } catch(e){
-          serverRecent.innerHTML = `<div class="small muted">Server unavailable</div>`;
-        }
+      // Show itinerary state
+      document.getElementById('itineraryState').classList.add('active');
+      document.getElementById('loadingState').classList.remove('active');
+      document.getElementById('idleState').classList.remove('active');
+      document.getElementById('errorState').classList.remove('active');
+      document.getElementById('formMessage').textContent = 'Itinerary generated successfully.';
+    }
+
+    // Render one day block. Expects object with day, morning, afternoon, evening, budget_note.
+    function renderDay(day){
+      const card = document.createElement('div');
+      card.className = 'dayCard';
+
+      const header = document.createElement('div');
+      header.className = 'dayHeader';
+      const left = document.createElement('div');
+      left.textContent = `Day ${day && day.day ? day.day : '?'}`;
+      const right = document.createElement('div');
+      right.style.color = 'var(--muted)';
+      right.style.fontSize = '13px';
+      right.textContent = day && day.budget_note ? `Note: ${String(day.budget_note)}` : '';
+      header.appendChild(left);
+      header.appendChild(right);
+      card.appendChild(header);
+
+      // Helper to append slot
+      function appendSlot(label, content){
+        const slot = document.createElement('div');
+        slot.className = 'slot';
+        const lab = document.createElement('div');
+        lab.className = 'slotLabel';
+        lab.textContent = label;
+        const txt = document.createElement('div');
+        txt.className = 'slotText';
+        // Use renderActivity to populate readable text node(s)
+        const activityNode = renderActivity(content);
+        txt.appendChild(activityNode);
+        slot.appendChild(lab);
+        slot.appendChild(txt);
+        card.appendChild(slot);
       }
 
-      // Download JSON
-      function downloadJson(obj, filename){
-        const blob = new Blob([JSON.stringify(obj, null, 2)], {type:'application/json'});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = (filename || ('itinerary-'+(obj.destination||'trip')+'-'+toISO()))+'.json';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+      // If the API provided an activities array, render sequentially
+      if (Array.isArray(day.activities) && day.activities.length){
+        day.activities.forEach((a, i) => {
+          appendSlot(`Activity ${i+1}`, a);
+        });
+      } else {
+        appendSlot('Morning', day && day.morning ? day.morning : 'Free morning for local exploration.');
+        appendSlot('Afternoon', day && day.afternoon ? day.afternoon : 'Leisurely afternoon.');
+        appendSlot('Evening', day && day.evening ? day.evening : 'Relaxed evening and optional dinner.');
       }
 
-      // Helpers for quick actions
-      downloadSampleBtn.addEventListener('click', ()=>{
-        const sample = {
-          itinerary_id: 'sample-001',
-          destination: 'Sample City',
-          days: 2,
-          budget: 'medium',
-          interests: ['culture','food'],
-          overview: 'A short sample itinerary.',
-          itinerary: [
-            { day_number:1, activities:[{id:'a1', name:'City walking tour', type:'tour', description:'Guided walk', est_duration_minutes:120, est_cost:20, start_time:'09:00', location:{address:'Central Square'}}] },
-            { day_number:2, morning:'Visit the historic museum', afternoon:'Local food market', evening:'Live music venue' }
-          ],
-          tips: 'Book tickets for museums in advance.'
+      return card;
+    }
+
+    // Render a single activity. Accepts string or object. Returns a DOM node (span or div).
+    function renderActivity(activity, label=""){
+      const wrap = document.createElement('div');
+      wrap.style.minHeight = '20px';
+      // If string or primitive, format directly
+      const text = formatActivityText(activity);
+      wrap.textContent = text;
+      return wrap;
+    }
+
+    // Convert strings, arrays, and activity objects into readable text.
+    function formatActivityText(value){
+      // String
+      if (typeof value === 'string'){
+        return value;
+      }
+      // Number or boolean
+      if (typeof value === 'number' || typeof value === 'boolean'){
+        return String(value);
+      }
+      // Array
+      if (Array.isArray(value)){
+        return value.map(v => formatActivityText(v)).join(' • ');
+      }
+      // Object: build readable summary from known fields
+      if (value && typeof value === 'object'){
+        // Prefer title/name, then short description fields.
+        const title = (value.title || value.name) ? String(value.title || value.name) : '';
+        const desc = (value.description || value.desc) ? String(value.description || value.desc) : '';
+        const loc = value.location ? String(value.location) : '';
+        const dur = value.duration ? String(value.duration) : '';
+        const costNum = (typeof value.estimated_cost === 'number') ? value.estimated_cost :
+                        (typeof value.cost === 'number' ? value.cost : null);
+        const cost = costNum !== null ? `Est. $${costNum.toFixed(2)}` : '';
+        const parts = [];
+        if (title) parts.push(title);
+        if (desc) parts.push(desc);
+        if (loc) parts.push(`Location: ${loc}`);
+        if (dur) parts.push(`Duration: ${dur}`);
+        if (cost) parts.push(cost);
+        if (parts.length) return parts.join(' — ');
+        // Fallback: try JSON-safe short serialization of known keys
+        const fallback = Object.keys(value).slice(0,3).map(k => `${k}: ${String(value[k])}`).join(' • ');
+        return fallback || 'Activity details';
+      }
+      return 'Activity';
+    }
+
+    // Wire up form submission and UI interactions
+    (function(){
+      const form = document.getElementById('plannerForm');
+      const resetBtn = document.getElementById('resetBtn');
+
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        document.getElementById('formMessage').textContent = '';
+        const data = collectFormData();
+        if (!validateFormData(data)) return;
+        setLoading(true, 'Contacting itinerary engine…');
+
+        // Build payload: ensure interests is an array
+        const payload = {
+          destination: data.destination,
+          days: data.days,
+          budget: Number.isFinite(data.budget) ? data.budget : 3,
+          interests: Array.isArray(data.interests) ? data.interests : [],
+          travel_style: data.travel_style || 'balanced'
         };
-        downloadJson(sample, 'sample-itinerary');
+
+        fetch('/api/itinerary', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(payload)
+        }).then(async resp => {
+          setLoading(false);
+          if (!resp.ok){
+            let text;
+            try { text = await resp.json(); text = text && text.error ? text.error : JSON.stringify(text); }
+            catch(err){ text = await resp.text().catch(()=>String(resp.statusText)); }
+            showError(`Server error: ${text}`);
+            return;
+          }
+          let json;
+          try { json = await resp.json(); }
+          catch(err){ showError('Invalid JSON response from server.'); return; }
+          renderItinerary(json);
+        }).catch(err => {
+          setLoading(false);
+          showError('Network error: Unable to reach the itinerary service.');
+          console.error(err);
+        });
       });
 
-      printLastBtn.addEventListener('click', ()=>{
-        if(!lastItinerary){
-          setFailure('No generated itinerary to print');
-          return;
-        }
-        window.print();
+      resetBtn.addEventListener('click', function(){
+        form.reset();
+        // Reset multi-select to none
+        const sel = document.getElementById('interests');
+        if (sel && sel.options) for (const o of sel.options) o.selected = false;
+        document.getElementById('formMessage').textContent = '';
+        document.getElementById('idleState').classList.add('active');
+        document.getElementById('itineraryState').classList.remove('active');
+        document.getElementById('errorState').classList.remove('active');
+        document.getElementById('loadingState').classList.remove('active');
       });
-
-      refreshRecentBtn.addEventListener('click', ()=> fetchServerRecents());
-      clearLocalBtn.addEventListener('click', ()=> {
-        localStorage.removeItem(LOCAL_KEY);
-        renderLocalList();
-      });
-
-      resetBtn.addEventListener('click', ()=> {
-        plannerForm.reset();
-        // set default selects
-        qs('#days').value = 3;
-        qs('#budget').value = 'medium';
-        qs('#travel_style').value = 'balanced';
-        qs('#mobility').value = 'public';
-      });
-
-      // Help view
-      function showHelp(){
-        resultArea.innerHTML = '';
-        const help = document.createElement('div');
-        help.className = 'card';
-        help.innerHTML = `<h3 style="margin-top:0">About this tool</h3>
-          <p class="small muted">Enter a destination, trip length, budget and interests to generate a practical, day-by-day itinerary. The generator uses a deterministic rule-based algorithm (server-side) to produce consistent plans. Results may be saved to the server and to your browser local storage.</p>
-          <h4 style="margin-bottom:6px">API</h4>
-          <div class="small muted">POST /api/itinerary — JSON body with destination, days, budget, interests, travel_style. Returns a JSON itinerary. GET /api/itineraries and GET /api/itineraries/{id} may be available to retrieve saved items.</div>`;
-        resultArea.appendChild(help);
-      }
-
-      // Initial render
-      renderLocalList();
-      fetchServerRecents().catch(()=>{/*ignore*/});
-
-      // Accessibility: focus first input
-      qs('#destination').focus();
-
     })();
   </script>
 <script id="frontend-image-contract-agent">

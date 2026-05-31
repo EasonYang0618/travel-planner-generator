@@ -5,24 +5,33 @@ skinparam packageStyle rectangle
 actor Tourist
 actor "Travel Agency Assistant" as Assistant
 
-package "Travel Planner Generator" {
-  usecase "Enter Preferences\n(destination, days, budget, interests)" as EnterPrefs
-  usecase "Generate Itinerary\n(day-by-day JSON & schedule)" as GenerateItin
-  usecase "View Website\n(form, results, recent items)" as ViewWebsite
-  usecase "Request Destination Image\n(optional POI enrichment)" as ReqImage
-  usecase "Access API\n(POST /api/itineraries, GET/DELETE)" as AccessAPI
+rectangle "Travel Planner Generator" {
+  usecase "Entering Preferences" as UC_Enter
+  usecase "Validating Input" as UC_Validate
+  usecase "Generating an Itinerary" as UC_Generate
+  usecase "Viewing Readable Day Plans" as UC_View
+  usecase "Requesting a Destination Image" as UC_Image
+  usecase "Running Tests" as UC_Tests
+  usecase "Deploying with Docker" as UC_Docker
 }
 
-Tourist -- ViewWebsite
-Tourist -- EnterPrefs
-Tourist --> GenerateItin
-Tourist -- ReqImage
+' Primary actor interactions
+Tourist -- UC_Enter
+Tourist -- UC_Generate
+Tourist -- UC_View
 
-Assistant -- AccessAPI
-Assistant -- ViewWebsite
-Assistant --> GenerateItin
+Assistant -- UC_Validate
+Assistant -- UC_Image
+Assistant -- UC_Tests
+Assistant -- UC_Docker
+Assistant -- UC_Generate
 
-EnterPrefs .> GenerateItin : <<include>>
-AccessAPI .> GenerateItin : <<include>>
-ReqImage .> GenerateItin : <<extend>>
+' Use case relationships
+UC_Enter .> UC_Validate : <<include>>
+UC_Generate .> UC_Validate : <<include>>
+UC_View .> UC_Generate : <<include>>
+UC_Image ..> UC_View : <<extend>>
+UC_Tests .> UC_Generate : <<include>>
+UC_Docker .> UC_Tests : <<include>>
+
 @enduml

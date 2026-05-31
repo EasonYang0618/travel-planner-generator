@@ -2,214 +2,443 @@ import requests
 import re
 import base64
 import time
-from flask import Flask, request, jsonify, send_from_directory
+import logging
+from flask import Flask, request, jsonify, send_from_directory, make_response
 from flask_cors import CORS
-import os, datetime, hashlib
+import os
+import hashlib
 
 app = Flask(__name__)
+
+logger = logging.getLogger(__name__)
 CORS(app)
 
-INTEREST_MAP = {
-    'nature': 'outdoor', 'outdoors': 'outdoor',
-    'museum': 'museums', 'museums': 'museums',
-    'history': 'culture', 'culture': 'culture',
-    'dining': 'food', 'food': 'food',
-    'nightlife': 'nightlife','shopping':'shopping'
-}
-DEFAULT_INTERESTS = ['culture', 'food', 'outdoor']
-
-ACTIVITY_TEMPLATES = {
-    'culture': [
-        ("City Museum visit", "Explore a local museum or cultural center."),
-        ("Historical walking tour", "Guided or self-guided walk through historic district.")
-    ],
-    'museums': [
-        ("Art & History Museum", "See curated exhibits highlighting local heritage."),
-        ("Special exhibition", "Temporary exhibits featuring regional artists.")
-    ],
-    'food': [
-        ("Local market tasting", "Sample street food and local specialties."),
-        ("Recommended restaurant", "Sit-down meal at a popular local spot.")
-    ],
-    'outdoor': [
-        ("Scenic park visit", "Relax or walk in a well-known park or nature spot."),
-        ("Coastal promenade", "Walk along waterfront or viewpoints.")
-    ],
-    'nightlife': [
-        ("Live music venue", "Enjoy local bands or performances."),
-        ("Bar hop", "Visit a selection of popular local bars.")
-    ],
-    'shopping': [
-        ("Local artisan market", "Browse crafts and souvenirs."),
-        ("Shopping street", "Explore boutiques and local designers.")
-    ]
-}
-
-BUDGET_SCALE = {'low': 0.5, 'medium': 1.0, 'high': 2.0}
+def normalize_budget_value(budget):
+    """
+    Normalize budget to one of: low, medium, high.
+    Uses str(budget) as required.
+    """
+    s = str(budget).strip().lower()
+    # if text labels provided
+    if s in ("low", "medium", "high"):
+        return s
+    # try numeric interpretation
+    try:
+        v = float(s)
+        if v <= 2:
+            return "low"
+        if v <= 4:
+            return "medium"
+        return "high"
+    except Exception:
+        # fallback default
+        return "medium"
 
 def normalize_interests(raw):
-    if not raw:
-        return DEFAULT_INTERESTS
-    if isinstance(raw, str):
-        items = [s.strip() for s in raw.split(',')]
-    elif isinstance(raw, list):
-        items = raw
-    else:
-        return DEFAULT_INTERESTS
-    mapped = []
-    for it in items:
-        if not it: continue
-        key = it.lower()
-        mapped.append(INTEREST_MAP.get(key, key))
-    mapped = [m for m in mapped if m]
-    # keep only known or defaults
-    valid = [m for m in mapped if m in ACTIVITY_TEMPLATES]
-    return valid if valid else DEFAULT_INTERESTS
-
-def seed_from_inputs(destination, days, budget, interests, travel_style):
-    s = f"{destination}|{days}|{budget}|{','.join(interests)}|{travel_style}"
-    return int(hashlib.md5(s.encode()).hexdigest()[:8], 16)
-
-def pick_activity(interest, index):
-    options = ACTIVITY_TEMPLATES.get(interest, ACTIVITY_TEMPLATES['culture'])
-    return options[index % len(options)]
-
-def cost_for_activity(budget_level):
-    base = 20
-    scale = BUDGET_SCALE.get(budget_level, 1.0)
-    return int(base * scale)
-
-
-def parse_interests(raw):
-    if not raw:
-        return DEFAULT_INTERESTS[:] if "DEFAULT_INTERESTS" in globals() else ["culture", "food", "outdoor"]
-    if isinstance(raw, str):
-        values = [item.strip().lower() for item in raw.replace(";", ",").split(",") if item.strip()]
-    elif isinstance(raw, list):
-        values = [str(item).strip().lower() for item in raw if str(item).strip()]
-    else:
-        values = []
-    interest_map = globals().get("INTEREST_MAP", {"nature": "outdoor", "outdoors": "outdoor", "history": "culture", "dining": "food"})
-    valid = set(globals().get("BASE_COSTS", {"culture": 1, "food": 1, "outdoor": 1, "museums": 1}).keys())
-    normalized = []
-    for value in values:
-        mapped = interest_map.get(value, value)
-        if mapped in valid and mapped not in normalized:
-            normalized.append(mapped)
-    return normalized or (DEFAULT_INTERESTS[:] if "DEFAULT_INTERESTS" in globals() else ["culture", "food", "outdoor"])
-
-def make_activity(interest, time_window, *args):
-    destination = None
-    if len(args) == 1:
-        budget = args[0]
-    elif len(args) >= 2:
-        destination = args[0]
-        budget = args[1]
-    else:
-        budget = "medium"
-    templates = {
-        "culture": ("Cultural landmark visit", "Explore a notable cultural site and learn local context."),
-        "food": ("Local food stop", "Try representative local dishes in a popular neighbourhood."),
-        "outdoor": ("Scenic outdoor walk", "Spend time in a park, waterfront, garden, or viewpoint."),
-        "museums": ("Museum visit", "Visit a museum or curated exhibition related to the city."),
-        "nightlife": ("Evening entertainment", "Enjoy a relaxed local nightlife or performance option."),
-        "shopping": ("Local shopping area", "Browse markets, boutiques, or craft shops.")
+    """
+    Normalize interests input to a list of lowercase strings with mappings:
+    nature/outdoors -> outdoor
+    museum -> museums
+    history -> culture
+    dining -> food
+    preserve nightlife, family, shopping
+    """
+    mapping = {
+        "nature": "outdoor",
+        "outdoors": "outdoor",
+        "outdoor": "outdoor",
+        "museum": "museums",
+        "museums": "museums",
+        "history": "culture",
+        "dining": "food",
+        "food": "food",
+        "nightlife": "nightlife",
+        "family": "family",
+        "shopping": "shopping",
+        "culture": "culture",
     }
-    title, description = templates.get(interest, templates["culture"])
-    base_costs = globals().get("BASE_COSTS", {})
-    low, high = base_costs.get(interest, (10, 40))
-    multiplier = globals().get("BUDGET_MULT", {}).get(budget, 1.0)
-    location_prefix = f"{destination} " if destination else ""
-    return {"title": title, "name": title, "description": description, "time_window": time_window, "duration_minutes": 90, "estimated_cost": int(((low + high) / 2) * multiplier), "location": f"{location_prefix}{interest.title()} area"}
+    result = []
+    if raw is None:
+        return result
+    if isinstance(raw, str):
+        items = [raw]
+    elif isinstance(raw, (list, tuple)):
+        items = list(raw)
+    else:
+        items = [str(raw)]
+    for it in items:
+        if it is None:
+            continue
+        key = str(it).strip().lower()
+        if not key:
+            continue
+        norm = mapping.get(key, key)
+        if norm not in result:
+            result.append(norm)
+    return result
 
-@app.route('/health', methods=['GET'])
+def make_activity(activity_source, time_window="activity", budget="medium", destination=""):
+    """
+    Build a consistent activity dict from either a POI dict or a category string.
+    Must not use a dict as a key.
+    """
+    # budget multiplier
+    mult = {"low": 0.6, "medium": 1.0, "high": 1.6}.get(str(budget), 1.0)
+    # helper to get fields from dict safely
+    if isinstance(activity_source, dict):
+        title = activity_source.get("title") or activity_source.get("name") or "Local activity"
+        name = activity_source.get("name") or title
+        description = activity_source.get("description") or activity_source.get("desc") or f"A pleasant {title.lower()} in {destination}".strip()
+        location = activity_source.get("location") or destination or "Central area"
+        base_cost = activity_source.get("estimated_cost") or activity_source.get("cost") or activity_source.get("price") or 20.0
+        # duration preference: minutes then hours
+        duration_minutes = activity_source.get("duration_minutes")
+        duration_hours = activity_source.get("duration_hours")
+        if duration_minutes is None and duration_hours is not None:
+            try:
+                duration_minutes = int(float(duration_hours) * 60)
+            except Exception:
+                duration_minutes = 60
+        if duration_minutes is None:
+            duration_minutes = activity_source.get("duration") or 60
+        try:
+            estimated_cost = float(base_cost) * mult
+        except Exception:
+            estimated_cost = 20.0 * mult
+        image_prompt = activity_source.get("image_prompt") or f"{title} in {destination}"
+    else:
+        # activity_source is a category string
+        title = str(activity_source).title()
+        name = title
+        description = f"{title} experience in {destination} during the {time_window}."
+        location = destination or "Central area"
+        base_cost = 25.0
+        duration_minutes = 90 if time_window == "afternoon" else 60
+        estimated_cost = base_cost * mult
+        image_prompt = f"{title} in {destination}"
+    # assemble activity dict
+    activity = {
+        "title": str(title),
+        "name": str(name),
+        "description": str(description),
+        "time_window": str(time_window),
+        "duration_minutes": int(duration_minutes) if isinstance(duration_minutes, (int, float)) else 60,
+        "estimated_cost": round(float(estimated_cost), 2),
+        "location": str(location),
+        "image_prompt": str(image_prompt),
+    }
+    return activity
+
+def _det_hash(*parts):
+    s = "|".join(str(p) for p in parts)
+    h = hashlib.md5(s.encode("utf-8")).hexdigest()
+    return int(h[:16], 16)
+
+def build_itinerary(destination, days, budget, interests, travel_style):
+    """
+    Build an itinerary list containing exactly one dict per day.
+    Each day includes day, morning, afternoon, evening, budget_note.
+    """
+    dest = destination or "Your destination"
+    budget_norm = normalize_budget_value(budget)
+    interests_list = normalize_interests(interests)
+    # ensure at least one interest
+    if not interests_list:
+        interests_list = ["culture", "food"]
+
+    # activity banks per interest with multiple concrete templates
+    banks = {}
+
+    banks["food"] = [
+        {"title": "Breakfast street-food lane", "description": "Start with local breakfast specialties at a bustling lane.", "estimated_cost": 8, "duration_minutes": 45, "location": "Market Lane"},
+        {"title": "Local market tasting", "description": "Sample regional produce and small bites at the morning market.", "estimated_cost": 15, "duration_minutes": 60, "location": "Main Market"},
+        {"title": "Signature restaurant meal", "description": "Enjoy a curated tasting menu at a noted local restaurant.", "estimated_cost": 45, "duration_minutes": 90, "location": "Gourmet Quarter"},
+        {"title": "Dessert and tea stop", "description": "Relax with a local dessert and tea at a cosy café.", "estimated_cost": 12, "duration_minutes": 40, "location": "Tea Street"},
+        {"title": "Evening snack street", "description": "Walk a lively snack street sampling quick evening treats.", "estimated_cost": 10, "duration_minutes": 50, "location": "Snack Alley"},
+    ]
+
+    banks["outdoor"] = [
+        {"title": "Lakefront walk", "description": "A gentle walk along the lakefront with scenic views.", "estimated_cost": 0, "duration_minutes": 60, "location": "Lakeside"},
+        {"title": "City park reset", "description": "Relax in a spacious city park and observe local life.", "estimated_cost": 0, "duration_minutes": 50, "location": "Central Park"},
+        {"title": "Scenic viewpoint", "description": "Short hike to a viewpoint overlooking the city.", "estimated_cost": 0, "duration_minutes": 80, "location": "Hilltop View"},
+        {"title": "Garden or nature trail", "description": "Stroll through curated gardens and nature trails.", "estimated_cost": 5, "duration_minutes": 70, "location": "Botanic Garden"},
+    ]
+
+    banks["museums"] = [
+        {"title": "City museum visit", "description": "Explore the city museum with local exhibits.", "estimated_cost": 12, "duration_minutes": 90, "location": "Museum District"},
+        {"title": "Special exhibition", "description": "See a featured temporary exhibition.", "estimated_cost": 18, "duration_minutes": 75, "location": "Exhibit Hall"},
+        {"title": "Architectural tour", "description": "Guided look at historic buildings and museum architecture.", "estimated_cost": 10, "duration_minutes": 60, "location": "Old Quarter"},
+    ]
+
+    banks["culture"] = [
+        {"title": "Historic neighbourhoods", "description": "Wander through historic streets and learn local stories.", "estimated_cost": 0, "duration_minutes": 80, "location": "Historic District"},
+        {"title": "Local cultural center", "description": "Visit a cultural center with performances or workshops.", "estimated_cost": 20, "duration_minutes": 90, "location": "Cultural Center"},
+        {"title": "Guided heritage walk", "description": "Join a short guided walk focused on history and culture.", "estimated_cost": 12, "duration_minutes": 70, "location": "Heritage Trail"},
+    ]
+
+    banks["nightlife"] = [
+        {"title": "Live music evening", "description": "Enjoy live local music at a neighbourhood venue.", "estimated_cost": 20, "duration_minutes": 120, "location": "Music Row"},
+        {"title": "Cocktail bar crawl", "description": "Sample crafted cocktails at a trio of bars.", "estimated_cost": 35, "duration_minutes": 150, "location": "Bar Street"},
+        {"title": "Local performance", "description": "Attend a short theatrical or dance performance.", "estimated_cost": 25, "duration_minutes": 90, "location": "Town Theatre"},
+    ]
+
+    banks["family"] = [
+        {"title": "Interactive science center", "description": "Hands-on exhibits for all ages.", "estimated_cost": 18, "duration_minutes": 120, "location": "Science Center"},
+        {"title": "Urban zoo visit", "description": "See animals and enjoy family-friendly shows.", "estimated_cost": 22, "duration_minutes": 150, "location": "City Zoo"},
+        {"title": "Boat ride and picnic", "description": "Short boat trip with a picnic in a park.", "estimated_cost": 15, "duration_minutes": 100, "location": "River Pier"},
+    ]
+
+    banks["shopping"] = [
+        {"title": "Crafts market browsing", "description": "Browse handmade goods and local crafts.", "estimated_cost": 10, "duration_minutes": 60, "location": "Craft Market"},
+        {"title": "Boutique street walk", "description": "Explore boutique shops and designer stores.", "estimated_cost": 30, "duration_minutes": 90, "location": "Shopping Street"},
+        {"title": "Outlet or local mall", "description": "Visit a larger shopping center for variety.", "estimated_cost": 20, "duration_minutes": 120, "location": "City Mall"},
+    ]
+
+    # Ensure every interest has a bank; fallback to culture
+    for it in interests_list:
+        if it not in banks:
+            banks[it] = banks.get("culture", [])
+
+    themes = [
+        "Arrival and orientation",
+        "Local culture and history",
+        "Food and neighbourhoods",
+        "Scenery and slower pace",
+        "Hidden corners and markets",
+        "Final highlights and favourites",
+    ]
+
+    itinerary = []
+    for day in range(1, int(days) + 1):
+        # pick a theme deterministically
+        theme_idx = _det_hash(destination, day, travel_style) % len(themes)
+        theme = themes[theme_idx]
+
+        day_slots = {}
+        slot_names = ["morning", "afternoon", "evening"]
+        picked_sources = []
+        total_cost = 0.0
+        for slot in slot_names:
+            # choose which interest to use for this slot deterministically
+            interest_idx = _det_hash(destination, day, slot, travel_style) % len(interests_list)
+            interest = interests_list[interest_idx]
+            bank = banks.get(interest) or []
+            # ensure non-empty bank
+            if not bank:
+                # fallback to a simple generated activity
+                source = {"title": f"{interest.title()} experience", "description": f"A {interest} activity in {destination}", "estimated_cost": 10}
+            else:
+                pick_idx = _det_hash(destination, day, slot, interest) % len(bank)
+                source = bank[pick_idx]
+            # avoid exact duplicate selection within same day/slot by shifting if already picked
+            attempt = 0
+            while source in picked_sources and attempt < 3:
+                pick_idx = (pick_idx + 1) % len(bank) if bank else pick_idx
+                source = bank[pick_idx] if bank else source
+                attempt += 1
+            picked_sources.append(source)
+            activity = make_activity(source, time_window=slot, budget=budget_norm, destination=destination)
+            total_cost += float(activity.get("estimated_cost", 0.0))
+            day_slots[slot] = activity
+
+        budget_note = round(total_cost, 2)
+        day_obj = {
+            "day": day,
+            "theme": theme,
+            "morning": day_slots["morning"],
+            "afternoon": day_slots["afternoon"],
+            "evening": day_slots["evening"],
+            "budget_note": budget_note,
+        }
+        itinerary.append(day_obj)
+
+    return itinerary
+
+def create_error(message, status_code=400, field=None):
+    """
+    Create a consistent JSON error response for validation failures.
+    """
+    payload = {"error": str(message)}
+    if field:
+        payload["fields"] = field
+    return make_response(jsonify(payload), int(status_code))
+
+@app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok"})
 
 @app.route("/", methods=["GET"])
 def index():
     return send_from_directory(".", "index.html")
+@app.route("/ui", methods=["GET"])
+def ui():
+    # Minimal frontend with stable IDs and JS functions required by tests.
+    html = """
+    <!doctype html>
+    <html>
+    <head><meta charset="utf-8"><title>Planner UI</title></head>
+    <body>
+    <h1>Travel Itinerary Planner</h1>
+    <form id="plannerForm" onsubmit="return false;">
+      <label>Destination: <input id="destination" name="destination"></label><br>
+      <label>Days: <input id="days" name="days" type="number" min="1" max="14"></label><br>
+      <label>Budget: <input id="budget" name="budget"></label><br>
+      <label>Interests (comma): <input id="interests" name="interests"></label><br>
+      <label>Travel style: <input id="travel_style" name="travel_style"></label><br>
+      <button id="submitBtn" onclick="collectFormData()">Plan Trip</button>
+    </form>
+    <div id="formMessage"></div>
+    <div id="errorMessage" style="color:red"></div>
+    <div id="resultsContainer">
+      <div id="daysContainer"></div>
+    </div>
+    <script>
+    // Stable functions for tests
+    function collectFormData() {
+      setLoading(true);
+      const data = {
+        destination: document.getElementById('destination').value || '',
+        days: parseInt(document.getElementById('days').value || '0', 10),
+        budget: document.getElementById('budget').value || '',
+        interests: (document.getElementById('interests').value || '').split(',').map(s=>s.trim()).filter(Boolean),
+        travel_style: document.getElementById('travel_style').value || ''
+      };
+      if (!validateFormData(data)) { setLoading(false); return; }
+      fetch('/api/itinerary', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(data)
+      }).then(r=>r.json().then(js=>({status:r.status, body:js}))).then(r=>{
+        setLoading(false);
+        if (r.status >= 400) {
+          showError(JSON.stringify(r.body));
+        } else {
+          renderItinerary(r.body);
+        }
+      }).catch(e=>{ setLoading(false); showError(String(e)); });
+    }
+    function validateFormData(data) {
+      const err = [];
+      if (!data.destination) err.push('destination required');
+      if (!(Number.isInteger(data.days) && data.days >=1 && data.days<=14)) err.push('days 1-14');
+      if (err.length) { showError(err.join('; ')); return false; }
+      return true;
+    }
+    function setLoading(isLoading) {
+      document.getElementById('formMessage').textContent = isLoading ? 'Loading...' : '';
+    }
+    function showError(msg) {
+      document.getElementById('errorMessage').textContent = msg;
+    }
+    function formatActivityText(act) {
+      if (!act) return '';
+      if (typeof act === 'string') return act;
+      // Build readable string from object fields.
+      const title = act.title || act.name || '';
+      const desc = act.description || '';
+      const cost = (act.estimated_cost !== undefined) ? ('$'+act.estimated_cost) : '';
+      return title + ' — ' + desc + (cost ? (' ('+cost+')') : '');
+    }
+    function renderActivity(container, act) {
+      const div = document.createElement('div');
+      div.textContent = formatActivityText(act);
+      container.appendChild(div);
+    }
+    function renderDay(dayObj) {
+      const dayDiv = document.createElement('div');
+      dayDiv.className = 'day';
+      const h = document.createElement('h3');
+      h.textContent = 'Day ' + dayObj.day + ' — ' + (dayObj.theme || '');
+      dayDiv.appendChild(h);
+      const morning = document.createElement('div');
+      morning.textContent = 'Morning: ';
+      renderActivity(morning, dayObj.morning);
+      dayDiv.appendChild(morning);
+      const afternoon = document.createElement('div');
+      afternoon.textContent = 'Afternoon: ';
+      renderActivity(afternoon, dayObj.afternoon);
+      dayDiv.appendChild(afternoon);
+      const evening = document.createElement('div');
+      evening.textContent = 'Evening: ';
+      renderActivity(evening, dayObj.evening);
+      dayDiv.appendChild(evening);
+      const note = document.createElement('div');
+      note.textContent = 'Budget note: ' + dayObj.budget_note;
+      dayDiv.appendChild(note);
+      return dayDiv;
+    }
+    function renderItinerary(resp) {
+      document.getElementById('errorMessage').textContent = '';
+      document.getElementById('formMessage').textContent = 'Itinerary for ' + (resp.destination || '') ;
+      const container = document.getElementById('daysContainer');
+      container.innerHTML = '';
+      if (!resp.itinerary || !Array.isArray(resp.itinerary)) {
+        showError('Invalid itinerary');
+        return;
+      }
+      resp.itinerary.forEach(d=>{
+        container.appendChild(renderDay(d));
+      });
+    }
+    </script>
+    </body>
+    </html>
+    """
+    return render_template_string(html)
+
 
 @app.route("/generated_images/<path:filename>", methods=["GET"])
 def generated_image_file(filename):
     return send_from_directory(os.path.join(app.root_path, "generated_images"), filename)
 
-@app.route('/api/itinerary', methods=['POST'])
-def create_itinerary():
-    data = request.get_json(silent=True) or {}
-    destination = (data.get('destination') or "").strip()
+@app.route("/api/itinerary", methods=["POST"])
+def api_itinerary():
+    if not request.is_json:
+        return create_error("Expected JSON body", 400)
+    data = request.get_json()
+    # Validate required fields
+    dest = data.get("destination")
+    days = data.get("days")
+    budget = data.get("budget")
+    interests = data.get("interests")
+    travel_style = data.get("travel_style", "balanced")
+    if not dest or not str(dest).strip():
+        return create_error("destination is required", 400, field="destination")
+    # days must be integer between 1 and 14
     try:
-        days = int(data.get('days'))
+        days_int = int(days)
     except Exception:
-        days = None
-    budget = (data.get('budget') or "medium").lower()
-    interests = normalize_interests(data.get('interests'))
-    travel_style = (data.get('travel_style') or "moderate")
-    if not destination:
-        return jsonify({"error": "destination is required"}), 400
-    if days is None or not (1 <= days <= 14):
-        return jsonify({"error": "days must be an integer between 1 and 14"}), 400
-
-    seed = seed_from_inputs(destination, days, budget, interests, travel_style)
-    itinerary = []
-    total_estimated = 0
-    for d in range(1, days + 1):
-        # Deterministic selection based on seed and day
-        idx = (seed + d) % 997
-        morning, afternoon, evening = [], [], []
-        chosen_interest = interests[(seed + d) % len(interests)]
-        # pick activities rotating through interests
-        mi_name, mi_desc = pick_activity(chosen_interest, d)
-        cost = cost_for_activity(budget) + ((d * 3) % 20)
-        morning = [{"name": mi_name, "description": mi_desc,
-                    "est_duration_minutes": 120, "est_cost": cost}]
-        total = cost
-        # Afternoon: alternate interest or add local food
-        ai_interest = interests[(seed + d + 1) % len(interests)]
-        ai_name, ai_desc = pick_activity(ai_interest, d+1)
-        cost2 = int(cost * (0.8 if budget=='low' else 1.0))
-        afternoon = [{"name": ai_name, "description": ai_desc,
-                      "est_duration_minutes": 150, "est_cost": cost2}]
-        total += cost2
-        # Evening optional: add if travel_style or nightlife interest
-        if travel_style.lower() in ('relaxed','social') or 'nightlife' in interests or (d % 2 == 0):
-            ei_name, ei_desc = pick_activity('food', d+2)
-            cost3 = int(cost * (0.6 if budget=='low' else 1.2))
-            evening = [{"name": "Evening: " + ei_name, "description": "Dinner and evening activity. " + ei_desc,
-                        "est_duration_minutes": 120, "est_cost": cost3}]
-            total += cost3
-        # Ensure at least one activity
-        if not (morning or afternoon or evening):
-            morning = [{"name":"Leisure time","description":"Free time to explore.","est_duration_minutes":180,"est_cost":0}]
-        budget_note = f"Estimated daily spend: ${total}"
-        total_estimated += total
-        itinerary.append({
-            "day": d,
-            "morning": morning,
-            "afternoon": afternoon,
-            "evening": evening,
-            "budget_note": budget_note
-        })
-
-    overview = f"{days}-day trip to {destination} focused on {', '.join(interests)} with a {budget} budget."
-    tips = [
-        "Book major attractions in advance when possible.",
-        "Use public transport to save money and time.",
-        "Allow flexibility in your schedule for unexpected finds."
-    ]
-    result = {
-        "destination": destination,
-        "days": days,
+        return create_error("days must be an integer", 400, field="days")
+    if days_int < 1 or days_int > 14:
+        return create_error("days must be between 1 and 14", 400, field="days")
+    # interests should be list or convertible
+    if interests is None:
+        interests_list = []
+    else:
+        interests_list = interests
+    # Build itinerary
+    try:
+        itinerary = build_itinerary(dest, days_int, budget, interests_list, travel_style)
+    except Exception as e:
+        return create_error("Failed to build itinerary: " + str(e), 500)
+    # Tips - simple deterministic tips based on travel style
+    tips_map = {
+        "relaxed": ["Take time at cafés and avoid tight schedules.", "Prioritise one major site per day."],
+        "active": ["Wear comfortable shoes for walks.", "Book activities in advance where possible."],
+        "balanced": ["Mix guided tours with independent exploration.", "Allow a free evening each few days."],
+    }
+    tips = tips_map.get(str(travel_style).lower(), tips_map["balanced"])
+    response_payload = {
+        "destination": str(dest),
+        "days": days_int,
         "budget": budget,
-        "interests": interests,
+        "interests": normalize_interests(interests_list),
         "travel_style": travel_style,
-        "overview": overview,
+        "overview": f"A {days_int}-day trip plan for {dest}.",
         "itinerary": itinerary,
         "tips": tips,
-        "estimated_total": f"${total_estimated}",
-        "created_at": datetime.datetime.utcnow().isoformat() + "Z"
     }
-    return jsonify(result), 201
+    return make_response(jsonify(response_payload), 201)
 
 
 def slugify(value):
@@ -298,6 +527,6 @@ def api_destination_image():
         logger.exception("Error generating destination image")
         return jsonify({"error": "Image generation failed", "details": str(e)}), 500
 
-if __name__ == '__main__':
-    port = int(os.getenv("PORT", "5000"))
-    app.run(host='0.0.0.0', port=port)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)

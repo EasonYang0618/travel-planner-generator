@@ -1,19 +1,19 @@
-- Elena — Solo budget traveler  
-  - Role: Independent tourist planning short city breaks on mobile.  
-  - Goal: Quickly generate a 2–4 day, low-cost itinerary focused on food, walking tours and nightlife.  
-  - Main concern: Accurate cost estimates and realistic timing; a simple mobile-friendly interface that’s fast and easy to use.
+1) Role: Emily — Solo Sightseer
+- Goal: Maximise sightseeing in a short city break with a clear, easy-to-follow plan.
+- Main concern: Confusing schedules or technical output (e.g., [object Object]) that make the itinerary unusable on the go.
+- Acceptance expectation: The app returns a clear day-by-day itinerary whose length equals the requested days, with distinct morning/afternoon/evening human-readable activity titles/descriptions (no raw objects).
 
-- Mark — Family trip planner  
-  - Role: Parent organizing a multi-day trip for a family with young children.  
-  - Goal: Create a 5–7 day, kid-friendly itinerary balancing activities and downtime, with clear transport and meal options.  
-  - Main concern: Safety and accessibility (stroller-friendly, short transfers), manageable daily schedules, and easy-to-find booking links.
+2) Role: Javier — Family Vacation Planner
+- Goal: Create a multi-day, kid-friendly itinerary with variety so each day feels fresh.
+- Main concern: Repeating the same few activities across days or inappropriate pacing for children.
+- Acceptance expectation: Interests are expanded into multiple concrete activities and each day has a different theme so activities don’t repeat across days (readable strings, not generic fallbacks).
 
-- Sofia — Travel agency operator  
-  - Role: Agency staff who prepares, customizes and shares itineraries for clients.  
-  - Goal: Build, edit and export personalised day-by-day plans quickly and send them to clients (email/print).  
-  - Main concern: Ability to override or tweak suggestions, reliable cost breakdowns, and a straightforward UI for fast client delivery.
+3) Role: Priya — Budget Backpacker
+- Goal: See as much as possible on a tight budget while avoiding unexpected costs.
+- Main concern: Vague cost labels that don’t translate into planning decisions.
+- Acceptance expectation: Each day includes a numeric budget_note and activity estimated costs adjusted by the selected budget level so total daily affordability is clear.
 
-- Alex — Integration developer / partner  
-  - Role: Developer integrating the itinerary engine into partner websites or internal tools via the Flask API.  
-  - Goal: Automate itinerary requests, consume JSON responses and embed results into other apps.  
-  - Main concern: Clear API docs, stable endpoints, authentication, predictable JSON schema, and reasonable rate limits.
+4) Role: Ahmed — Travel Agent / Operator
+- Goal: Quickly generate deterministic, shareable itineraries for clients and later add visual assets.
+- Main concern: Unstable APIs/frontends or premature image handling that break automation or tests.
+- Acceptance expectation: The system follows the stable contract (GET /health, POST /api/itinerary with required request/response fields), uses the specified stable frontend IDs/functions, produces deterministic output for automated checks, and the frontend does not create its own image preview area (image integration handled separately).
