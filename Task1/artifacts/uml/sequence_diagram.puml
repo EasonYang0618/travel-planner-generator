@@ -1,39 +1,33 @@
 @startuml
 actor User
 participant Website
-participant "Flask API" as API
+participant "Flask API" as FlaskAPI
 participant APIFree
 
-User -> Website: Submit plannerForm
+User -> Website: Submit travel prefs
 activate Website
-Website -> Website: collectFormData()
 Website -> Website: validateFormData()
 alt valid
-  Website -> API: POST /api/itinerary
-  activate API
-  API -> API: build stable itinerary
-  API --> Website: 200 OK (itinerary)
-  deactivate API
-  Website -> Website: renderItinerary()
-  Website -> API: GET /api/image?prompt=itinerary
-  activate API
-  API -> APIFree: GET /generate?prompt=itinerary
-  activate APIFree
-  APIFree --> API: 200 OK (image_url)
-  deactivate APIFree
-  API --> Website: 200 OK (image_url)
-  deactivate API
-  Website -> User: Display itinerary & image
-else invalid
-  Website -> User: showError
-end
-Website -> Website: setLoading(false)
-deactivate Website
+  Website -> FlaskAPI: POST /api/itinerary
+  activate FlaskAPI
+  FlaskAPI -> FlaskAPI: build itinerary
+  note right of FlaskAPI: returns stable schema:\ndestination, days, budget, interests,\ntravel_style, overview, itinerary[], tips
+  FlaskAPI --> Website: 200 OK itinerary
+  deactivate FlaskAPI
 
-note right of Website
-IDs: plannerForm,destination,days,budget,interests,travel_style,
-resultsContainer,daysContainer,formMessage,errorMessage
-Funcs: collectFormData,validateFormData,setLoading,showError,
-renderItinerary,renderDay,renderActivity,formatActivityText
-end note
+  Website -> Website: renderItinerary()
+  Website -> FlaskAPI: GET /api/image
+  activate FlaskAPI
+  FlaskAPI -> APIFree: GET /generate
+  activate APIFree
+  APIFree --> FlaskAPI: 200 OK image_url
+  deactivate APIFree
+  FlaskAPI --> Website: 200 OK image
+  deactivate FlaskAPI
+
+  Website --> User: Display itinerary + image
+else invalid
+  Website --> User: 400 Bad Request
+end
+deactivate Website
 @enduml

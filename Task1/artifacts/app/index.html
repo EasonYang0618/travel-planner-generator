@@ -6,57 +6,55 @@
   <title>Travel Planner Generator</title>
   <style>
     :root{
-      --bg:#f6f7fb; --card:#ffffff; --muted:#6b7280; --accent:#2563eb; --danger:#dc2626;
-      --shadow: 0 6px 18px rgba(17,24,39,0.08);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      color-scheme: light;
+      --bg:#f6f7fb; --card:#ffffff; --muted:#6b7280; --accent:#1366d6; --success:#0f9d58;
+      --maxw:980px; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
     html,body{height:100%}
     body{
-      margin:0; background:linear-gradient(180deg,var(--bg),#eef2ff 60%); color:#0f172a;
-      display:flex; align-items:flex-start; justify-content:center; padding:36px 20px;
+      margin:0; background:linear-gradient(180deg,#f8fafc 0%,var(--bg)100%); color:#111827;
+      display:flex; align-items:flex-start; justify-content:center; padding:28px;
     }
-    .container{max-width:1100px; width:100%;}
-    header{display:flex; align-items:center; gap:16px; margin-bottom:18px;}
-    header h1{font-size:20px;margin:0;font-weight:600}
-    header p{margin:0;color:var(--muted);font-size:13px}
-    .layout{display:grid; grid-template-columns:380px 1fr; gap:20px; align-items:start;}
-    form#plannerForm{background:var(--card); padding:18px; border-radius:10px; box-shadow:var(--shadow); border:1px solid rgba(15,23,42,0.04);}
-    label{display:block;font-weight:600;font-size:13px;margin-bottom:6px;color:#0b1220}
+    .container{width:100%;max-width:var(--maxw);}
+    header{margin-bottom:18px}
+    h1{font-size:20px;margin:0 0 6px 0}
+    p.lead{margin:0;color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:380px 1fr;gap:18px;align-items:start}
+    form#plannerForm{background:var(--card);padding:18px;border-radius:10px;box-shadow:0 6px 18px rgba(17,24,39,0.06)}
+    label{display:block;font-size:13px;margin-bottom:6px;color:#111827}
     .field{margin-bottom:12px}
-    input[type="text"], input[type="number"], select, .multi{
-      width:100%; padding:10px 12px; border-radius:8px; border:1px solid rgba(15,23,42,0.08); background:transparent;
-      font-size:14px; color:#071033; box-sizing:border-box;
+    input[type="text"], input[type="number"], select, textarea{
+      width:100%; padding:10px 12px;border:1px solid #e6e9ef;border-radius:8px;
+      font-size:14px; background:transparent; color:inherit; box-sizing:border-box;
     }
-    select[multiple]{height:110px}
-    .row{display:flex; gap:8px}
-    button{background:var(--accent); color:white; border:0; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:600}
-    button[disabled]{opacity:0.6; cursor:default}
-    .note{font-size:13px;color:var(--muted); margin-top:6px}
-    .results{background:transparent}
-    .card{background:var(--card); padding:18px; border-radius:10px; box-shadow:var(--shadow); border:1px solid rgba(15,23,42,0.04);}
-    #resultsContainer .states{min-height:220px}
-    .state{display:none}
-    .state.active{display:block}
-    #loadingState .spinner{display:inline-block; width:14px; height:14px; border:2px solid rgba(0,0,0,0.08); border-top-color:var(--accent); border-radius:50%; animation:spin .9s linear infinite; margin-right:8px}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .itinerary-header{display:flex; justify-content:space-between; gap:12px; align-items:baseline; margin-bottom:12px}
-    #itTitle{font-size:18px; font-weight:700}
-    #itMeta{font-size:13px; color:var(--muted)}
-    #overview{color:#0b1220; margin-bottom:12px}
-    .day{border-top:1px dashed rgba(11,17,34,0.06); padding:12px 0}
-    .day:first-child{border-top:0}
-    .day-title{font-weight:700; margin-bottom:8px}
-    .slot{display:flex; gap:12px; align-items:flex-start; margin-bottom:8px}
-    .slot-label{width:88px; font-weight:600; color:var(--muted); font-size:13px}
-    .slot-body{flex:1}
-    .activity-title{font-weight:700; font-size:14px}
-    .activity-meta{font-size:13px; color:var(--muted); margin-top:4px}
-    #budgetNotes{margin-top:12px; font-size:13px; color:#0b1220}
-    #tipsArea{margin-top:12px; font-size:13px}
-    .error{color:var(--danger); font-weight:600}
-    footer{margin-top:18px; color:var(--muted); font-size:12px}
-    .sr-only{position:absolute; left:-10000px; top:auto; width:1px; height:1px; overflow:hidden}
+    .actions{display:flex;gap:8px;margin-top:10px}
+    button.primary{
+      background:var(--accent);color:#fff;border:0;padding:10px 14px;border-radius:8px;font-weight:600;cursor:pointer;
+    }
+    button.secondary{background:transparent;border:1px solid #d1d5db;padding:10px 14px;border-radius:8px;cursor:pointer}
+    .note{font-size:12px;color:var(--muted);margin-top:8px}
+    /* Results area */
+    .panel{background:var(--card);padding:18px;border-radius:10px;box-shadow:0 6px 18px rgba(17,24,39,0.06)}
+    #resultsContainer .state{display:none}
+    #resultsContainer .state.visible{display:block}
+    #itTitle{font-size:18px;font-weight:700;margin:0}
+    #itMeta{font-size:13px;color:var(--muted);margin-top:6px}
+    #overview{margin:12px 0;color:#111827}
+    #daysContainer{display:flex;flex-direction:column;gap:12px}
+    .dayCard{border:1px solid #eef2f7;border-radius:8px;padding:10px;background:#fff}
+    .dayHeader{display:flex;justify-content:space-between;align-items:center}
+    .dayHeader .title{font-weight:700}
+    .slot{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px dashed #f1f5f9}
+    .slot:first-of-type{border-top:0;padding-top:0}
+    .slot .label{color:var(--muted);width:110px;font-size:13px}
+    .slot .content{flex:1;font-size:14px}
+    .budgetNotes{margin-top:10px;color:var(--muted);font-size:13px}
+    .tipsArea{margin-top:12px}
+    .tipsArea li{margin-bottom:6px}
+    .formMessage{font-size:13px;color:var(--muted);margin-top:8px}
+    .error{color:#b91c1c;background:#fff5f5;border:1px solid #fecaca;padding:10px;border-radius:8px}
+    #errorMessage{font-size:13px}
+    footer{margin-top:14px;font-size:12px;color:var(--muted)}
+    @media (max-width:880px){ .grid{grid-template-columns:1fr; } form#plannerForm{order:2} .panel{order:1} }
   </style>
 
 <style id="ai-image-showcase-style">
@@ -73,12 +71,10 @@
 
 </head>
 <body>
-  <div class="container">
+  <div class="container" role="main">
     <header>
-      <div>
-        <h1>Travel Planner Generator</h1>
-        <p>Generate a clear, day-by-day city itinerary tailored to your needs.</p>
-      </div>
+      <h1>Travel Planner Generator</h1>
+      <p class="lead">Generate a concise, day-by-day itinerary tailored to destination, duration, budget and interests.</p>
     </header>
 
 <section id="aiImageShowcase" class="ai-image-showcase" aria-label="AI generated travel images">
@@ -97,449 +93,434 @@
 </section>
 
 
-    <div class="layout">
-      <form id="plannerForm" aria-labelledby="formTitle" novalidate>
-        <div class="row" style="align-items:center; margin-bottom:12px;">
-          <div style="flex:1">
-            <div id="formTitle" style="font-weight:700; margin-bottom:6px">Plan a Trip</div>
-            <div class="note">Enter destination, duration, budget and interests.</div>
-          </div>
-        </div>
-
+    <div class="grid" aria-live="polite">
+      <form id="plannerForm" novalidate>
         <div class="field">
           <label for="destination">Destination</label>
-          <input id="destination" name="destination" type="text" placeholder="City, country (e.g., Lisbon, PT)" required />
+          <input id="destination" name="destination" type="text" maxlength="100" placeholder="City, region or country" required />
         </div>
 
         <div class="field">
-          <label for="days">Days</label>
-          <input id="days" name="days" type="number" min="1" value="3" required />
+          <label for="days">Days (1–14)</label>
+          <input id="days" name="days" type="number" min="1" max="14" value="3" required />
         </div>
 
         <div class="field">
-          <label for="budget">Budget profile</label>
-          <select id="budget" name="budget" aria-label="budget">
-            <option value="low">Low</option>
-            <option value="medium" selected>Medium</option>
-            <option value="high">High</option>
+          <label for="budget">Budget level</label>
+          <select id="budget" name="budget" required>
+            <option value="low">low</option>
+            <option value="medium" selected>medium</option>
+            <option value="high">high</option>
           </select>
         </div>
 
         <div class="field">
-          <label for="interests">Interests (hold Ctrl/Cmd to select multiple)</label>
-          <select id="interests" name="interests" multiple>
-            <option value="culture">Culture & museums</option>
-            <option value="food">Food & drink</option>
-            <option value="outdoor">Outdoor & nature</option>
-            <option value="architecture">Architecture & design</option>
-            <option value="shopping">Local shopping & markets</option>
-            <option value="nightlife">Evening & nightlife</option>
-            <option value="family">Family-friendly</option>
-          </select>
+          <label for="interests">Interests (comma separated)</label>
+          <input id="interests" name="interests" type="text" placeholder="e.g., food, history, outdoor" />
+          <div class="note">Provide keywords to personalise activities. Repeat entries are allowed.</div>
         </div>
 
         <div class="field">
           <label for="travel_style">Travel style</label>
           <select id="travel_style" name="travel_style">
-            <option value="relaxed">Relaxed</option>
-            <option value="active">Active</option>
-            <option value="family">Family</option>
-            <option value="luxury">Luxury</option>
+            <option value="relaxed" selected>relaxed</option>
+            <option value="active">active</option>
+            <option value="family">family</option>
+            <option value="honeymoon">honeymoon</option>
           </select>
         </div>
 
-        <div style="display:flex; gap:10px; align-items:center; margin-top:8px;">
-          <button id="submitBtn" type="submit">Generate Itinerary</button>
-          <div id="formMessage" style="font-size:13px;color:var(--muted)"></div>
+        <div class="actions">
+          <button type="submit" class="primary">Generate Itinerary</button>
+          <button type="reset" class="secondary">Reset</button>
         </div>
-        <div id="errorMessage" class="note error" style="margin-top:8px"></div>
+
+        <div id="formMessage" class="formMessage" aria-live="polite"></div>
+        <div id="errorMessage" class="formMessage" role="alert" aria-live="assertive"></div>
       </form>
 
-      <div class="results">
-        <div id="resultsContainer">
-          <div class="states card" aria-live="polite">
-            <div id="idleState" class="state active">
-              <div style="font-weight:700; margin-bottom:8px">Ready</div>
-              <div class="note">Complete the form and click "Generate Itinerary" to see a day-by-day plan.</div>
-            </div>
+      <section class="panel" id="resultsContainer" aria-live="polite">
+        <!-- Idle -->
+        <div id="idleState" class="state visible">
+          <h2 id="itTitle">Ready to generate</h2>
+          <div id="itMeta">Fill the form and click Generate Itinerary.</div>
+          <p id="overview" class="lead" style="margin-top:10px;color:var(--muted)">Results will appear here once you submit the form.</p>
+        </div>
 
-            <div id="loadingState" class="state">
-              <div style="display:flex;align-items:center">
-                <div class="spinner" aria-hidden="true"></div>
-                <div id="loadingText" style="font-weight:600">Generating itinerary…</div>
-              </div>
-              <div class="note" style="margin-top:10px">This may take a moment. The server will return a structured plan.</div>
-            </div>
+        <!-- Loading -->
+        <div id="loadingState" class="state" role="status" aria-live="polite">
+          <h2 id="itTitle">Generating itinerary…</h2>
+          <div id="itMeta" style="color:var(--muted)">Please wait while we build a clear day-by-day plan.</div>
+          <p id="overview" style="margin-top:10px;color:var(--muted)">This may take a few moments.</p>
+        </div>
 
-            <div id="errorState" class="state">
-              <div style="font-weight:700; color:var(--danger); margin-bottom:8px">Error</div>
-              <div id="errorMessage" class="note error"></div>
-            </div>
+        <!-- Error -->
+        <div id="errorState" class="state">
+          <h2 class="error">Unable to generate itinerary</h2>
+          <div id="errorMessage" class="error" role="alert"></div>
+        </div>
 
-            <div id="itineraryState" class="state">
-              <div class="itinerary-header">
-                <div>
-                  <div id="itTitle">Itinerary</div>
-                  <div id="itMeta" aria-hidden="true"></div>
-                </div>
-                <div style="text-align:right; font-size:13px; color:var(--muted)" id="generatedAt"></div>
-              </div>
-
-              <div id="overview" class="note"></div>
-
-              <div id="daysContainer" role="list"></div>
-
-              <div id="budgetNotes" style="margin-top:12px; font-size:13px; color:var(--muted)"></div>
-
-              <div id="tipsArea" style="margin-top:12px"></div>
-            </div>
+        <!-- Itinerary -->
+        <div id="itineraryState" class="state" aria-live="polite">
+          <h2 id="itTitle"></h2>
+          <div id="itMeta"></div>
+          <p id="overview"></p>
+          <div id="daysContainer" style="margin-top:12px"></div>
+          <div id="budgetNotes" class="budgetNotes"></div>
+          <div style="margin-top:12px">
+            <h3 style="margin:6px 0 8px 0;font-size:15px">Tips</h3>
+            <ul id="tipsArea" class="tipsArea"></ul>
           </div>
         </div>
 
-        <footer style="margin-top:10px" class="note">
-          The planner provides structured, printable itineraries. Images are handled by a separate component.
-        </footer>
-      </div>
+      </section>
     </div>
+
+    <footer>
+      <small>Deterministic itinerary generation for coursework. No images are shown here.</small>
+    </footer>
   </div>
 
   <script>
-    /* Stable frontend functions required by contract:
+    /* Stable frontend function set required by contract.
+       Exactly these functions are exported in global scope:
        collectFormData, validateFormData, setLoading, showError,
        renderItinerary, renderDay, renderActivity, formatActivityText
-       No other named functions are defined to keep the contract exact.
     */
 
+    // Helper constants used by functions (not additional functions)
+    const _budgetFactors = { low: 0.75, medium: 1.0, high: 1.45 };
+
+    /* collectFormData - reads form and returns required fields.
+       Returns an object with keys: destination, days, budget, interests, travel_style
+    */
     function collectFormData(){
-      const dest = document.getElementById('destination').value.trim();
+      const destination = String(document.getElementById('destination').value || "").trim();
       const daysRaw = document.getElementById('days').value;
-      const days = daysRaw === '' ? '' : Number(daysRaw);
-      const budget = document.getElementById('budget').value;
-      const interestsSelect = document.getElementById('interests');
-      const selected = Array.from(interestsSelect && interestsSelect.options ? interestsSelect.options : [])
-        .filter(o => o.selected).map(o => o.value);
-      const travel_style = document.getElementById('travel_style').value;
-      return {
-        destination: dest,
-        days: days,
-        budget: budget,
-        interests: selected,
-        travel_style: travel_style
-      };
+      const days = Number(daysRaw) || 0;
+      const budget = String(document.getElementById('budget').value || "medium");
+      const interestsRaw = String(document.getElementById('interests').value || "").trim();
+      // split comma-separated interests into array of trimmed strings, filter empties
+      const interests = interestsRaw.length ? interestsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+      const travel_style = String(document.getElementById('travel_style').value || "relaxed");
+      return { destination, days, budget, interests, travel_style };
     }
 
+    /* validateFormData(data) - validate destination and days
+       Returns { valid: boolean, errors: [] }
+    */
     function validateFormData(data){
       const errors = [];
-      if(!data.destination || typeof data.destination !== 'string' || data.destination.length < 2){
-        errors.push('Destination is required (enter a city or place).');
+      if(!data || typeof data !== 'object') {
+        errors.push('Invalid form data.');
+        return { valid:false, errors };
       }
-      if(!Number.isInteger(data.days) || data.days < 1){
-        errors.push('Days must be an integer of at least 1.');
+      if(!data.destination || typeof data.destination !== 'string' || !data.destination.trim()){
+        errors.push('Destination is required.');
+      } else if (data.destination.trim().length > 100){
+        errors.push('Destination too long (max 100 characters).');
       }
-      return { valid: errors.length === 0, errors: errors };
+      if(!Number.isInteger(data.days) || data.days < 1 || data.days > 14){
+        errors.push('Days must be an integer between 1 and 14.');
+      }
+      return { valid: errors.length === 0, errors };
     }
 
+    /* setLoading(isLoading, message="") - toggles loading UI states */
     function setLoading(isLoading, message=""){
+      const container = document.getElementById('resultsContainer');
       const idle = document.getElementById('idleState');
       const loading = document.getElementById('loadingState');
       const itinerary = document.getElementById('itineraryState');
       const error = document.getElementById('errorState');
-      const formMsg = document.getElementById('formMessage');
-
+      // hide all, then show appropriate
+      [idle, loading, itinerary, error].forEach(el => el.classList.remove('visible'));
       if(isLoading){
-        idle.classList.remove('active');
-        itinerary.classList.remove('active');
-        error.classList.remove('active');
-        loading.classList.add('active');
-        document.getElementById('loadingText').textContent = message || 'Generating itinerary…';
-        formMsg.textContent = 'Working…';
-        document.getElementById('submitBtn').disabled = true;
+        loading.classList.add('visible');
+        if(message) {
+          const meta = loading.querySelector('#itMeta');
+          if(meta) meta.textContent = String(message);
+        }
       } else {
-        loading.classList.remove('active');
-        document.getElementById('submitBtn').disabled = false;
-        formMsg.textContent = '';
+        idle.classList.add('visible');
       }
     }
 
+    /* showError(message) - display error in UI */
     function showError(message){
+      const errEl = document.getElementById('errorMessage');
       const idle = document.getElementById('idleState');
       const loading = document.getElementById('loadingState');
       const itinerary = document.getElementById('itineraryState');
       const error = document.getElementById('errorState');
-      idle.classList.remove('active');
-      loading.classList.remove('active');
-      itinerary.classList.remove('active');
-      error.classList.add('active');
-      const errorMessageEls = document.querySelectorAll('#errorState #errorMessage, #plannerForm #errorMessage');
-      errorMessageEls.forEach(el => { if(el) el.textContent = message; });
-      document.getElementById('formMessage').textContent = '';
-      document.getElementById('submitBtn').disabled = false;
+      [idle, loading, itinerary].forEach(el=>el.classList.remove('visible'));
+      error.classList.add('visible');
+      if(errEl) errEl.textContent = String(message || 'An unexpected error occurred.');
+      // also set form-level message
+      const fm = document.getElementById('formMessage');
+      if(fm) fm.textContent = '';
+      // focus error for accessibility
+      error.focus && error.focus();
     }
 
+    /* formatActivityText(value) - convert strings, arrays, objects into readable text */
     function formatActivityText(value){
-      // Convert strings, arrays, and objects to readable text.
-      if(value === null || value === undefined) return '';
-      if(typeof value === 'string' || typeof value === 'number'){
-        return String(value);
-      }
-      if(Array.isArray(value)){
-        return value.map(v => formatActivityText(v)).filter(Boolean).join('; ');
-      }
+      if(value === null || typeof value === 'undefined') return '';
+      if(typeof value === 'string') return value.trim();
+      if(Array.isArray(value)) return value.map(v => formatActivityText(v)).filter(Boolean).join(' • ');
       if(typeof value === 'object'){
-        // Defensive: extract known fields
+        // Defensive combining of known fields; do not return raw object
+        const title = (value.title || value.name) ? String(value.title || value.name).trim() : '';
+        const desc = (value.description || value.desc) ? String(value.description || value.desc).trim() : '';
+        const loc = (value.location || value.location_hint) ? String(value.location || value.location_hint).trim() : '';
+        const cost = (typeof value.estimated_cost === 'number' || typeof value.cost === 'number')
+          ? Number(value.estimated_cost || value.cost)
+          : null;
+        const dur = (value.duration_minutes || value.duration) ? String(value.duration_minutes || value.duration) : '';
         const parts = [];
-        if(value.title) parts.push(String(value.title));
-        if(value.name && !value.title) parts.push(String(value.name));
-        if(value.description) parts.push(String(value.description));
-        if(value.desc && !value.description) parts.push(String(value.desc));
-        const meta = [];
-        if(typeof value.estimated_cost === 'number' || typeof value.estimated_cost === 'string'){
-          meta.push('Est. cost: $' + Number(value.estimated_cost).toFixed(2));
-        }
-        if(typeof value.duration_minutes === 'number'){
-          meta.push(String(value.duration_minutes) + ' min');
-        }
-        if(value.location_hint) meta.push(String(value.location_hint));
-        if(meta.length) parts.push('(' + meta.join(' • ') + ')');
-        const text = parts.join(' — ');
-        return text || JSON.stringify(value);
+        if(title) parts.push(title);
+        if(desc) parts.push(desc);
+        if(loc) parts.push('Location: ' + loc);
+        if(dur) parts.push('Duration: ' + dur + (isNaN(Number(dur)) ? '' : ' min'));
+        if(cost !== null && !isNaN(cost)) parts.push('Est. cost: ' + cost.toFixed(2));
+        if(parts.length) return parts.join(' — ');
+        // Fallback: stringify safe fields
+        return Object.keys(value).slice(0,3).map(k => `${k}: ${String(value[k])}`).join(' — ');
       }
       return String(value);
     }
 
+    /* renderActivity(activity, label="") - returns a DOM element representing one activity */
     function renderActivity(activity, label=""){
-      const wrapper = document.createElement('div');
-      wrapper.className = 'activity';
-      if(activity === null || activity === undefined){
-        const t = document.createElement('div');
-        t.textContent = label ? label + ': No details available.' : 'No details available.';
-        wrapper.appendChild(t);
-        return wrapper;
+      const wrap = document.createElement('div');
+      wrap.className = 'activity';
+      const content = document.createElement('div');
+      content.className = 'content';
+      // If activity is object, prefer human-readable fields and do not inject raw object
+      if(typeof activity === 'string'){
+        content.textContent = formatActivityText(activity);
+      } else if(Array.isArray(activity)){
+        content.textContent = formatActivityText(activity);
+      } else if(typeof activity === 'object' && activity !== null){
+        // Compose readable text and include cost if numeric
+        const title = activity.title || activity.name || '';
+        const descr = activity.description || activity.desc || '';
+        const location = activity.location || activity.location_hint || '';
+        const est = (typeof activity.estimated_cost === 'number') ? activity.estimated_cost : (typeof activity.cost === 'number' ? activity.cost : null);
+        const duration = activity.duration_minutes || activity.duration || null;
+
+        const parts = [];
+        if(title) parts.push(String(title));
+        if(descr) parts.push(String(descr));
+        if(location) parts.push('Location: ' + String(location));
+        if(duration) parts.push('Duration: ' + String(duration) + (Number.isInteger(duration) ? ' min' : ''));
+        if(est !== null && !isNaN(Number(est))) parts.push('Est. cost: ' + Number(est).toFixed(2));
+        if(parts.length) {
+          content.textContent = parts.join(' — ');
+        } else {
+          // Last resort: use formatActivityText which will try to create readable fallback
+          content.textContent = formatActivityText(activity);
+        }
+      } else {
+        content.textContent = String(activity);
       }
-
-      if(typeof activity === 'string' || typeof activity === 'number'){
-        const title = document.createElement('div');
-        title.className = 'activity-title';
-        title.textContent = String(activity);
-        wrapper.appendChild(title);
-        return wrapper;
+      if(label){
+        const lab = document.createElement('div');
+        lab.className = 'label';
+        lab.textContent = label;
+        wrap.appendChild(lab);
       }
-
-      // activity is expected to be an object
-      const titleText = activity.title || activity.name || ('Activity');
-      const titleEl = document.createElement('div');
-      titleEl.className = 'activity-title';
-      titleEl.textContent = titleText;
-      wrapper.appendChild(titleEl);
-
-      const metaParts = [];
-      if(activity.description || activity.desc){
-        const descText = activity.description || activity.desc;
-        const descEl = document.createElement('div');
-        descEl.className = 'activity-meta';
-        descEl.textContent = String(descText);
-        wrapper.appendChild(descEl);
-      }
-
-      if(typeof activity.estimated_cost === 'number'){
-        metaParts.push('Cost: $' + Number(activity.estimated_cost).toFixed(2));
-      }
-
-      if(typeof activity.duration_minutes === 'number'){
-        metaParts.push('Duration: ' + activity.duration_minutes + ' min');
-      }
-
-      if(activity.location_hint){
-        metaParts.push('Location: ' + String(activity.location_hint));
-      }
-
-      if(metaParts.length){
-        const m = document.createElement('div');
-        m.className = 'activity-meta';
-        m.textContent = metaParts.join(' • ');
-        wrapper.appendChild(m);
-      }
-
-      // If there is an image prompt available, show a non-actionable indicator (no preview)
-      if(activity.image_prompt){
-        const imgNote = document.createElement('div');
-        imgNote.className = 'activity-meta';
-        imgNote.textContent = 'Image available for separate image service.';
-        wrapper.appendChild(imgNote);
-      }
-
-      return wrapper;
+      wrap.appendChild(content);
+      return wrap;
     }
 
+    /* renderDay(day) - renders a single day object into daysContainer */
     function renderDay(day){
-      const dayEl = document.createElement('div');
-      dayEl.className = 'day';
+      const dc = document.getElementById('daysContainer');
+      if(!dc) return;
+      const card = document.createElement('div');
+      card.className = 'dayCard';
+      const header = document.createElement('div');
+      header.className = 'dayHeader';
       const title = document.createElement('div');
-      title.className = 'day-title';
-      title.textContent = 'Day ' + (day.day || '?') + (day.theme ? ' — ' + String(day.theme) : '');
-      dayEl.appendChild(title);
+      title.className = 'title';
+      title.textContent = 'Day ' + (day.day || '?');
+      const note = document.createElement('div');
+      note.className = 'muted';
+      note.style.color = 'var(--muted)';
+      note.style.fontSize = '13px';
+      note.textContent = day.theme || '';
+      header.appendChild(title);
+      header.appendChild(note);
+      card.appendChild(header);
 
-      // Morning
-      const morningSlot = document.createElement('div');
-      morningSlot.className = 'slot';
-      const morningLabel = document.createElement('div');
-      morningLabel.className = 'slot-label';
-      morningLabel.textContent = 'Morning';
-      morningSlot.appendChild(morningLabel);
-      const morningBody = document.createElement('div');
-      morningBody.className = 'slot-body';
-      morningBody.appendChild(renderActivity(day.morning || 'Relaxed start or local café'));
-      morningSlot.appendChild(morningBody);
-      dayEl.appendChild(morningSlot);
+      // morning, afternoon, evening
+      const slots = ['morning','afternoon','evening'];
+      slots.forEach(slot => {
+        const slotWrap = document.createElement('div');
+        slotWrap.className = 'slot';
+        const lab = document.createElement('div');
+        lab.className = 'label';
+        lab.textContent = slot.charAt(0).toUpperCase() + slot.slice(1);
+        const content = document.createElement('div');
+        content.className = 'content';
 
-      // Afternoon
-      const aftSlot = document.createElement('div');
-      aftSlot.className = 'slot';
-      const aftLabel = document.createElement('div');
-      aftLabel.className = 'slot-label';
-      aftLabel.textContent = 'Afternoon';
-      aftSlot.appendChild(aftLabel);
-      const aftBody = document.createElement('div');
-      aftBody.className = 'slot-body';
-      aftBody.appendChild(renderActivity(day.afternoon || 'Exploration and sightseeing'));
-      aftSlot.appendChild(aftBody);
-      dayEl.appendChild(aftSlot);
-
-      // Evening
-      const eveSlot = document.createElement('div');
-      eveSlot.className = 'slot';
-      const eveLabel = document.createElement('div');
-      eveLabel.className = 'slot-label';
-      eveLabel.textContent = 'Evening';
-      eveSlot.appendChild(eveLabel);
-      const eveBody = document.createElement('div');
-      eveBody.className = 'slot-body';
-      eveBody.appendChild(renderActivity(day.evening || 'Leisurely evening option'));
-      eveSlot.appendChild(eveBody);
-      dayEl.appendChild(eveSlot);
-
-      // Budget note
-      const bnote = document.createElement('div');
-      bnote.className = 'note';
-      bnote.style.marginTop = '6px';
-      bnote.textContent = day.budget_note || '';
-      dayEl.appendChild(bnote);
-
-      return dayEl;
-    }
-
-    // Attach form submit handler
-    document.addEventListener('DOMContentLoaded', function(){
-      const form = document.getElementById('plannerForm');
-      form.addEventListener('submit', function(evt){
-        evt.preventDefault();
-        const data = collectFormData();
-        const valid = validateFormData(data);
-        const errorEls = document.querySelectorAll('#plannerForm #errorMessage, #errorState #errorMessage');
-        errorEls.forEach(el => { if(el) el.textContent = ''; });
-
-        if(!valid.valid){
-          const msg = valid.errors.join(' ');
-          showError(msg);
-          return;
+        const activity = day[slot];
+        // Use renderActivity to produce safe content
+        const actEl = renderActivity(activity);
+        // actEl has inner structure; move its content into slot content to maintain layout
+        if(actEl){
+          // actEl may contain a label div as first child we don't want; find .content inside
+          const innerContent = actEl.querySelector('.content');
+          if(innerContent){
+            content.textContent = ''; // clear
+            content.appendChild(document.createTextNode(innerContent.textContent));
+          } else {
+            content.textContent = formatActivityText(activity);
+          }
+        } else {
+          content.textContent = formatActivityText(activity);
         }
 
-        setLoading(true, 'Building itinerary…');
-        // POST to API
-        fetch('/api/itinerary', {
-          method: 'POST',
-          headers: {'Content-Type':'application/json'},
-          body: JSON.stringify({
-            destination: data.destination,
-            days: data.days,
-            budget: data.budget,
-            interests: data.interests,
-            travel_style: data.travel_style
-          })
-        }).then(async res => {
-          setLoading(false);
-          if(!res.ok){
-            const contentType = res.headers.get('content-type') || '';
-            let errText = 'Unable to generate itinerary.';
-            if(contentType.includes('application/json')){
-              try{
-                const err = await res.json();
-                if(err && err.error) errText = err.error + (err.details ? ' — ' + JSON.stringify(err.details) : '');
-              }catch(e){}
-            } else {
-              try{ errText = await res.text(); }catch(e){}
-            }
-            showError(errText);
-            return;
-          }
-          const json = await res.json();
-          renderItinerary(json);
-        }).catch(e => {
-          setLoading(false);
-          showError('Network error while contacting the itinerary service.');
-          console.error(e);
-        });
+        slotWrap.appendChild(lab);
+        slotWrap.appendChild(content);
+        card.appendChild(slotWrap);
       });
-    });
 
+      // budget note
+      const bnote = document.createElement('div');
+      bnote.className = 'budgetNotes';
+      bnote.style.marginTop = '8px';
+      bnote.style.color = 'var(--muted)';
+      bnote.textContent = day.budget_note || '';
+      card.appendChild(bnote);
+
+      dc.appendChild(card);
+    }
+
+    /* renderItinerary(data) - populate resultsContainer with API response */
     function renderItinerary(data){
-      // Defensive checks and rendering of the API response into the page.
+      // Basic defensive checks
+      if(!data || typeof data !== 'object'){
+        showError('Invalid itinerary data.');
+        return;
+      }
+      // Show itinerary state
       const idle = document.getElementById('idleState');
       const loading = document.getElementById('loadingState');
       const itinerary = document.getElementById('itineraryState');
       const error = document.getElementById('errorState');
-      idle.classList.remove('active');
-      loading.classList.remove('active');
-      error.classList.remove('active');
-      itinerary.classList.add('active');
+      [idle, loading, error].forEach(el=>el.classList.remove('visible'));
+      itinerary.classList.add('visible');
 
       // Title and meta
-      const title = document.getElementById('itTitle');
-      const meta = document.getElementById('itMeta');
-      title.textContent = 'Itinerary — ' + (data.destination || 'Destination');
-      meta.textContent = (data.days ? data.days + ' day(s)' : '') + (data.travel_style ? ' • ' + data.travel_style : '') + (data.budget ? ' • ' + data.budget : '');
-      document.getElementById('generatedAt').textContent = new Date().toLocaleString();
+      const titleEl = document.getElementById('itTitle');
+      const metaEl = document.getElementById('itMeta');
+      const overviewEl = document.getElementById('overview');
+      if(titleEl) titleEl.textContent = `Itinerary — ${String(data.destination || '')}`;
+      if(metaEl) metaEl.textContent = `${String(data.days || '')} day(s) • budget: ${String(data.budget || '')} • style: ${String(data.travel_style || '')}`;
+      if(overviewEl) overviewEl.textContent = String(data.overview || '');
 
-      // Overview
-      const ov = document.getElementById('overview');
-      ov.textContent = data.overview || ('A concise overview is not available.');
+      // Days container
+      const dc = document.getElementById('daysContainer');
+      dc.innerHTML = '';
+      const itineraryList = Array.isArray(data.itinerary) ? data.itinerary : [];
+      itineraryList.forEach(day => {
+        // Defensive default structure
+        const dayObj = Object.assign({
+          day: day && day.day ? day.day : null,
+          morning: day && ('morning' in day) ? day.morning : 'Free morning',
+          afternoon: day && ('afternoon' in day) ? day.afternoon : 'Free afternoon',
+          evening: day && ('evening' in day) ? day.evening : 'Free evening',
+          budget_note: day && day.budget_note ? day.budget_note : ''
+        }, day || {});
+        // Attach theme for header if available
+        if(!dayObj.theme && day && day.theme) dayObj.theme = day.theme;
+        renderDay(dayObj);
+      });
 
-      // Days
-      const daysContainer = document.getElementById('daysContainer');
-      daysContainer.innerHTML = '';
-      if(Array.isArray(data.itinerary) && data.itinerary.length){
-        data.itinerary.forEach(d => {
-          // Ensure day element follows schema; renderDay will handle defensive fallbacks
-          daysContainer.appendChild(renderDay(d));
-        });
-      } else {
-        const none = document.createElement('div');
-        none.textContent = 'No itinerary days returned by the service.';
-        daysContainer.appendChild(none);
-      }
-
-      // Budget notes
+      // Budget notes (overall)
       const bnotes = document.getElementById('budgetNotes');
-      bnotes.textContent = data.budget_notes || data.budget_note || '';
+      if(bnotes) bnotes.textContent = data.budget_notes || '';
 
       // Tips
-      const tipsArea = document.getElementById('tipsArea');
-      tipsArea.innerHTML = '';
-      if(Array.isArray(data.tips) && data.tips.length){
-        const ul = document.createElement('ul');
+      const tipsEl = document.getElementById('tipsArea');
+      tipsEl.innerHTML = '';
+      if(Array.isArray(data.tips)){
         data.tips.forEach(t => {
           const li = document.createElement('li');
           li.textContent = formatActivityText(t);
-          ul.appendChild(li);
+          tipsEl.appendChild(li);
         });
-        tipsArea.appendChild(document.createElement('div')).textContent = 'Tips:';
-        tipsArea.appendChild(ul);
       }
-
-      // Success feedback
-      const fm = document.getElementById('formMessage');
-      fm.textContent = 'Itinerary generated';
     }
+
+    // Attach form submit handling
+    (function(){
+      const form = document.getElementById('plannerForm');
+      const formMessage = document.getElementById('formMessage');
+      const errorMessage = document.getElementById('errorMessage');
+
+      // Initialize idle visible
+      document.getElementById('idleState').classList.add('visible');
+
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        if(formMessage) formMessage.textContent = '';
+        if(errorMessage) errorMessage.textContent = '';
+        const data = collectFormData();
+        const v = validateFormData(data);
+        if(!v.valid){
+          if(formMessage) formMessage.textContent = 'Please fix: ' + v.errors.join(' ');
+          showError(v.errors.join(' '));
+          return;
+        }
+
+        setLoading(true, 'Generating a tailored itinerary…');
+
+        fetch('/api/itinerary', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(data)
+        }).then(async res => {
+          setLoading(false);
+          if(res.status === 400){
+            // Expected error format
+            let payload;
+            try { payload = await res.json(); } catch(err){ payload = null; }
+            const msg = payload && payload.error && payload.error.message ? payload.error.message : 'Invalid input.';
+            showError(msg);
+            return;
+          }
+          if(!res.ok){
+            const txt = await res.text().catch(()=>res.statusText);
+            showError('Server error: ' + (txt || res.statusText));
+            return;
+          }
+          const json = await res.json();
+          // Render itinerary
+          renderItinerary(json);
+          // Provide a subtle success message
+          if(formMessage) formMessage.textContent = 'Itinerary generated successfully.';
+        }).catch(err=>{
+          setLoading(false);
+          showError('Network or server error.');
+          console.error(err);
+        });
+      });
+
+      // Reset handler to clear messages and show idle
+      form.addEventListener('reset', function(){
+        if(formMessage) formMessage.textContent = '';
+        if(errorMessage) errorMessage.textContent = '';
+        // show idle
+        document.getElementById('idleState').classList.add('visible');
+        document.getElementById('loadingState').classList.remove('visible');
+        document.getElementById('itineraryState').classList.remove('visible');
+        document.getElementById('errorState').classList.remove('visible');
+      });
+
+    })();
   </script>
 <script id="frontend-image-contract-agent">
 (function(){

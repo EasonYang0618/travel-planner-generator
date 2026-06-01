@@ -2,61 +2,57 @@
   "user_stories": [
     {
       "id": "US1",
-      "role": "Tourist",
-      "goal": "Generate a personalised day-by-day city travel itinerary from a web UI or API by providing destination, trip length, budget and interests",
-      "benefit": "Receive a clear, varied, and budget-aware plan to make trip planning faster and reduce decision fatigue",
+      "role": "As a traveler using the web application",
+      "goal": "I want to enter a destination, trip length, budget, interests and travel style and get a clear day-by-day itinerary",
+      "benefit": "so I can plan each day of my trip quickly and confidently",
       "acceptance_criteria": [
-        "User can submit the planner form or POST to /api/itinerary with fields: destination, days, budget, interests, travel_style",
-        "Successful response (HTTP 200) is JSON containing top-level keys: destination, days, budget, interests, travel_style, overview, itinerary, tips",
-        "The 'itinerary' value is a list with length exactly equal to the submitted days",
-        "Each itinerary day object includes keys: day (number), morning (activity or list), afternoon (activity or list), evening (activity or list), budget_note (string)",
-        "Estimated cost values in activity entries are numeric and adjusted by the selected budget level (not textual labels)",
-        "Activity titles and descriptions are human-readable strings (no raw dictionaries or '[object Object]')",
-        "Invalid or missing input returns HTTP 400 with a JSON error object describing the problem"
+        "A Flask API endpoint GET /health exists and returns HTTP 200 with a JSON status object",
+        "A Flask API endpoint POST /api/itinerary exists and accepts JSON payload with keys: destination, days, budget, interests, travel_style",
+        "Successful POST /api/itinerary returns HTTP 200 and a JSON object containing top-level keys: destination, days, budget, interests, travel_style, overview, itinerary, tips",
+        "The itinerary array length equals the days value provided in the request",
+        "Each itinerary day object includes keys: day (numeric), morning, afternoon, evening, budget_note",
+        "Activity titles and descriptions are human-readable strings (not raw dictionaries or [object Object]) and any activity dictionaries include readable fields such as title, description, cost",
+        "Estimated costs are numeric values adjusted by the provided budget (no low/medium/high strings)",
+        "Invalid or missing required input returns HTTP 400 with a JSON error object containing an error message"
       ]
     },
     {
       "id": "US2",
-      "role": "Backend developer",
-      "goal": "Implement a stable Flask API that reliably generates itineraries following the coursework quality contract",
-      "benefit": "Provide a deterministic, testable API for the frontend and automated tests to consume",
+      "role": "As a backend developer",
+      "goal": "I want a stable, deterministic itinerary generation contract so automated tests and Docker deployment succeed",
+      "benefit": "so CI tests and graders can reliably validate outputs",
       "acceptance_criteria": [
-        "API exposes GET /health returning HTTP 200 and a small JSON health object",
-        "API exposes POST /api/itinerary that accepts JSON body with keys: destination, days, budget, interests, travel_style",
-        "POST /api/itinerary validates inputs and returns HTTP 400 with JSON error on invalid input",
-        "A successful POST returns a JSON object containing the required top-level keys: destination, days, budget, interests, travel_style, overview, itinerary, tips",
-        "Itinerary generation expands each interest into multiple concrete activities (e.g., food -> street breakfast, market tasting, signature restaurant, dessert stop, evening snack) before assembling daily plans",
-        "Activities are rotated across morning/afternoon/evening using destination, day number, time slot and user interests so the same generic fallback does not repeat daily",
-        "Each day is assigned a different theme or planning focus where possible (e.g., culture day, food day, outdoor day)",
-        "Activity entries may be JSON objects but include plain string fields for title and description and numeric estimated_cost so frontends never render '[object Object]'"
+        "POST /api/itinerary behavior is deterministic for the same input (e.g., uses a stable algorithm or seed) so automated pytest checks pass",
+        "Itinerary generation expands each user interest into several concrete activities before assembling days (e.g., food -> breakfast street-food lane, local market tasting, signature restaurant meal, dessert and tea stop, evening snack street; outdoor -> lakefront walk, city park reset, scenic viewpoint, nature trail)",
+        "Activities are assigned to morning/afternoon/evening and rotate so the same generic fallback is not repeated each day; rotation should use destination, day number, time slot and user interests to vary items",
+        "Each day attempts a distinct theme or planning focus where possible (culture day, food day, outdoor day, shopping day, relaxation day)",
+        "Activity items can be returned as dictionaries, but include readable fields (title, description, cost) so the frontend can render them without displaying [object Object]"
       ]
     },
     {
       "id": "US3",
-      "role": "Frontend developer",
-      "goal": "Build a deterministic website interface that collects inputs, calls the Flask API, and renders readable itineraries using stable IDs and functions",
-      "benefit": "Deliver a testable UI that integrates cleanly with automated checks and later image handling components",
+      "role": "As a frontend developer",
+      "goal": "I want the website to collect form input, validate it, call the API, and render results using stable IDs and functions",
+      "benefit": "so the UI integrates with the backend contract and automated checks that look for specific elements/functions will pass",
       "acceptance_criteria": [
-        "The frontend form uses stable element IDs: plannerForm, destination, days, budget, interests, travel_style, resultsContainer, daysContainer, formMessage, errorMessage",
-        "The frontend implements stable functions: collectFormData, validateFormData, setLoading, showError, renderItinerary, renderDay, renderActivity, formatActivityText",
-        "Form submission calls POST /api/itinerary and handles HTTP 200 and HTTP 400 JSON responses; showError displays JSON error details in errorMessage",
-        "The UI renders each itinerary day with day number, morning, afternoon, evening, and budget_note using renderDay and renderActivity, and never shows raw object text like '[object Object]'",
-        "The frontend does not create its own image preview area or attempt to manage images (image integration is handled later by a separate agent)",
-        "Rendered estimated costs are numeric values displayed clearly (no low/medium/high strings)"
+        "Form elements use stable IDs: plannerForm, destination, days, budget, interests, travel_style, resultsContainer, daysContainer, formMessage, errorMessage",
+        "Frontend exposes the stable functions: collectFormData, validateFormData, setLoading, showError, renderItinerary, renderDay, renderActivity, formatActivityText",
+        "Frontend calls POST /api/itinerary with JSON containing destination, days, budget, interests, travel_style and handles a 200 response by calling renderItinerary to populate resultsContainer and daysContainer",
+        "Frontend handles HTTP 400 by showing the JSON error in errorMessage via showError",
+        "The frontend must not create an image preview area (image integration is handled later) and must render activities as readable text using formatActivityText so no [object Object] is shown"
       ]
     },
     {
       "id": "US4",
-      "role": "QA / Automation engineer",
-      "goal": "Ensure deterministic outputs and contract compliance for automated pytest and Docker-based checks",
-      "benefit": "Automated tests can verify API, frontend IDs/functions, and itinerary structure reliably across runs",
+      "role": "As a product owner responsible for itinerary quality",
+      "goal": "I want itineraries that avoid visible repetition and provide realistic cost estimates and daily planning focus",
+      "benefit": "so users perceive value and the itineraries are usable for real planning",
       "acceptance_criteria": [
-        "Automated tests can call GET /health and POST /api/itinerary and assert required top-level keys and types",
-        "Tests verify that itinerary list length equals requested days and that each day object contains day, morning, afternoon, evening, and budget_note",
-        "Tests assert estimated_cost fields are numeric and budgets influence cost values deterministically",
-        "Tests confirm interest expansion: a multi-day trip shows varied concrete activities derived from each interest rather than repeating the same three items",
-        "Tests confirm activity rotation so morning/afternoon/evening items vary by day using destination and day number, and that each day has a distinct theme where possible",
-        "Tests assert frontend exposes stable IDs and functions and that rendered activity text is human-readable with no '[object Object]' output"
+        "No single fallback activity string is repeated across all days; morning/afternoon/evening items rotate and vary by destination, day number and interest",
+        "Estimated costs scale numerically with budget input (e.g., budget mapping produces numeric cost adjustments) and budget_note explains the adjustment per day",
+        "Each day's morning, afternoon and evening activities are distinct and drawn from the expanded interest activity pool so multi-day trips do not repeatedly show the same three activities",
+        "Tips and overview are human-readable strings that summarize the trip and provide at least 3 useful, non-redundant tips",
+        "Generated output is stable and testable: itinerary length equals days, activity fields and day structure follow the contract exactly so graders can validate programmatically"
       ]
     }
   ]

@@ -1,19 +1,19 @@
-- Role: Solo budget traveler (backpacker)
-  - Goal: Maximise daily experiences in a new city on a shoestring budget.
-  - Main concern: Hidden or vague costs and repetitive, generic suggestions that waste time.
-  - Acceptance expectation: Receives a clear day-by-day itinerary with days equal to the requested length, numeric estimated costs adjusted for a low budget, no repeated fallback activities, and human-readable activity titles/descriptions.
+1) Role: Budget backpacker (solo leisure traveler)
+- Goal: Pack maximum local experiences into a short, affordable trip.
+- Main concern: Clear, varied daily plans and realistic numeric cost estimates so budgeting is simple.
+- Acceptance expectation: The itinerary must provide day-count-matching entries with morning/afternoon/evening slots, human-readable activity titles/descriptions, and numeric estimated costs (no low/medium/high strings); activities must not repeat the same generic fallback each day.
 
-- Role: Family trip planner (parent)
-  - Goal: Build a kid-friendly, easy-to-follow multi-day schedule that balances sights and downtime.
-  - Main concern: Confusing output or raw objects that are hard to read for non-technical family members.
-  - Acceptance expectation: Each day shows distinct morning/afternoon/evening entries and a budget_note, with readable strings (no [object Object]) so the family can follow the plan easily; image generation will be handled later (no image previews in the frontend).
+2) Role: Family trip planner (parent organizing a multi-day holiday)
+- Goal: Create a kid-friendly, well-paced itinerary that balances activities and rest.
+- Main concern: Readable day-by-day schedule, distinct daily themes, and practical tips (transport, meals, child accommodations).
+- Acceptance expectation: Each day must include day, morning, afternoon, evening, and budget_note fields with clear text (no [object Object]) and varied activities so children don’t see the same three items repeated.
 
-- Role: Luxury traveller
-  - Goal: Curated, high-quality experiences and dining each day with clear distinctions between themes.
-  - Main concern: Repetition and low-detail activity descriptions that don’t justify the higher spend.
-  - Acceptance expectation: Multi-day itinerary where each day has a different theme, activities expanded from interests into varied concrete options, and activity descriptions are rich and human-readable; if visual assets are needed later, the itinerary includes image metadata/placeholders but the frontend does not render image previews.
+3) Role: Travel agent staff (small agency employee using the web app for clients)
+- Goal: Quickly generate professional itineraries to present to clients and edit as needed.
+- Main concern: Stable, deterministic API and frontend behavior for repeatable proposals and automated tests.
+- Acceptance expectation: The system must expose /health and POST /api/itinerary accepting destination, days, budget, interests, travel_style, and return the required top-level fields (overview, itinerary, tips) with itinerary length equal to days and clear, printable day entries.
 
-- Role: Travel agency staff (itinerary generator)
-  - Goal: Quickly generate deterministic, client-ready itineraries via the web app/API for multiple clients.
-  - Main concern: Unstable API/formatting that breaks automation or frontend rendering.
-  - Acceptance expectation: API and frontend outputs conform to the quality contract (POST /api/itinerary returns required top-level fields, itinerary length equals days, rotating morning/afternoon/evening activities, numeric costs, stable IDs/functions), enabling reliable automated checks and downstream image integration.
+4) Role: Solo business traveler (short work trip with spare time)
+- Goal: Fit efficient sightseeing and good food into limited free hours around meetings.
+- Main concern: Precise timing (morning/afternoon/evening slots), concise activity descriptions, and quick visual references later.
+- Acceptance expectation: The itinerary must provide distinct slots per day with human-readable activity text and numeric cost; image handling should be delegated—the frontend must not create its own image preview area so images can be integrated later by the image service.
