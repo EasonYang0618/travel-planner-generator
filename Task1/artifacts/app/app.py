@@ -6,7 +6,6 @@ import logging
 from flask import Flask, request, jsonify, send_from_directory, make_response
 from flask_cors import CORS
 import os
-import hashlib
 
 app = Flask(__name__)
 
@@ -14,431 +13,241 @@ logger = logging.getLogger(__name__)
 CORS(app)
 
 def normalize_budget_value(budget):
-    """
-    Normalize budget to one of: low, medium, high.
-    Uses str(budget) as required.
-    """
     s = str(budget).strip().lower()
-    # if text labels provided
-    if s in ("low", "medium", "high"):
-        return s
-    # try numeric interpretation
-    try:
-        v = float(s)
-        if v <= 2:
-            return "low"
-        if v <= 4:
-            return "medium"
+    if s in ("low", "budget", "cheap"):
+        return "low"
+    if s in ("high", "premium", "expensive"):
         return "high"
-    except Exception:
-        # fallback default
-        return "medium"
+    return "medium"
 
 def normalize_interests(raw):
-    """
-    Normalize interests input to a list of lowercase strings with mappings:
-    nature/outdoors -> outdoor
-    museum -> museums
-    history -> culture
-    dining -> food
-    preserve nightlife, family, shopping
-    """
-    mapping = {
-        "nature": "outdoor",
-        "outdoors": "outdoor",
-        "outdoor": "outdoor",
-        "museum": "museums",
-        "museums": "museums",
-        "history": "culture",
-        "dining": "food",
-        "food": "food",
-        "nightlife": "nightlife",
-        "family": "family",
-        "shopping": "shopping",
-        "culture": "culture",
-    }
-    result = []
     if raw is None:
-        return result
+        return []
     if isinstance(raw, str):
         items = [raw]
-    elif isinstance(raw, (list, tuple)):
-        items = list(raw)
     else:
-        items = [str(raw)]
+        items = list(raw)
+    out = []
     for it in items:
-        if it is None:
+        if not isinstance(it, str):
             continue
-        key = str(it).strip().lower()
-        if not key:
-            continue
-        norm = mapping.get(key, key)
-        if norm not in result:
-            result.append(norm)
-    return result
+        s = it.strip().lower()
+        if s in ("nature", "outdoors", "outdoor", "outdoors"):
+            out.append("outdoor")
+        elif s == "museum":
+            out.append("museums")
+        elif s == "history":
+            out.append("culture")
+        elif s == "dining":
+            out.append("food")
+        elif s in ("nightlife", "family", "shopping", "food", "culture", "museums", "outdoor"):
+            out.append(s)
+        else:
+            out.append(s)
+    # deduplicate preserving order
+    seen = set()
+    res = []
+    for x in out:
+        if x not in seen:
+            seen.add(x)
+            res.append(x)
+    return res
 
 def make_activity(activity_source, time_window="activity", budget="medium", destination=""):
-    """
-    Build a consistent activity dict from either a POI dict or a category string.
-    Must not use a dict as a key.
-    """
-    # budget multiplier
-    mult = {"low": 0.6, "medium": 1.0, "high": 1.6}.get(str(budget), 1.0)
-    # helper to get fields from dict safely
+    # Accept dict POI or string category/name
     if isinstance(activity_source, dict):
-        title = activity_source.get("title") or activity_source.get("name") or "Local activity"
-        name = activity_source.get("name") or title
-        description = activity_source.get("description") or activity_source.get("desc") or f"A pleasant {title.lower()} in {destination}".strip()
-        location = activity_source.get("location") or destination or "Central area"
-        base_cost = activity_source.get("estimated_cost") or activity_source.get("cost") or activity_source.get("price") or 20.0
-        # duration preference: minutes then hours
-        duration_minutes = activity_source.get("duration_minutes")
-        duration_hours = activity_source.get("duration_hours")
-        if duration_minutes is None and duration_hours is not None:
-            try:
-                duration_minutes = int(float(duration_hours) * 60)
-            except Exception:
-                duration_minutes = 60
-        if duration_minutes is None:
-            duration_minutes = activity_source.get("duration") or 60
-        try:
-            estimated_cost = float(base_cost) * mult
-        except Exception:
-            estimated_cost = 20.0 * mult
-        image_prompt = activity_source.get("image_prompt") or f"{title} in {destination}"
+        title = activity_source.get("title") or activity_source.get("name") or "Local Activity"
+        description = activity_source.get("description") or activity_source.get("desc") or ""
+        duration = activity_source.get("duration_minutes") or activity_source.get("duration_hours")
+        base_cost = activity_source.get("estimated_cost", 20)
+        location = activity_source.get("location") or activity_source.get("location_hint") or destination or "city center"
     else:
-        # activity_source is a category string
-        title = str(activity_source).title()
-        name = title
-        description = f"{title} experience in {destination} during the {time_window}."
-        location = destination or "Central area"
-        base_cost = 25.0
-        duration_minutes = 90 if time_window == "afternoon" else 60
-        estimated_cost = base_cost * mult
-        image_prompt = f"{title} in {destination}"
-    # assemble activity dict
-    activity = {
-        "title": str(title),
-        "name": str(name),
-        "description": str(description),
-        "time_window": str(time_window),
-        "duration_minutes": int(duration_minutes) if isinstance(duration_minutes, (int, float)) else 60,
-        "estimated_cost": round(float(estimated_cost), 2),
-        "location": str(location),
-        "image_prompt": str(image_prompt),
+        title = str(activity_source)
+        description = f"A typical {title.lower()} experience in {destination}" if destination else f"A {title.lower()} experience"
+        duration = 60
+        base_cost = 20
+        location = destination or "city center"
+    # Normalize budget multiplier
+    b = normalize_budget_value(budget)
+    mult = {"low": 0.7, "medium": 1.0, "high": 1.4}.get(b, 1.0)
+    estimated_cost = round(float(base_cost) * mult, 2)
+    duration_minutes = duration if isinstance(duration, int) else (int(duration)*60 if isinstance(duration, float) else (duration or 60))
+    return {
+        "title": title,
+        "description": description,
+        "time_window": time_window,
+        "duration_minutes": int(duration_minutes),
+        "estimated_cost": estimated_cost,
+        "location": location,
+        "image_prompt": f"{title} in {destination}".strip()
     }
-    return activity
-
-def _det_hash(*parts):
-    s = "|".join(str(p) for p in parts)
-    h = hashlib.md5(s.encode("utf-8")).hexdigest()
-    return int(h[:16], 16)
-
-def build_itinerary(destination, days, budget, interests, travel_style):
-    """
-    Build an itinerary list containing exactly one dict per day.
-    Each day includes day, morning, afternoon, evening, budget_note.
-    """
-    dest = destination or "Your destination"
-    budget_norm = normalize_budget_value(budget)
-    interests_list = normalize_interests(interests)
-    # ensure at least one interest
-    if not interests_list:
-        interests_list = ["culture", "food"]
-
-    # activity banks per interest with multiple concrete templates
-    banks = {}
-
-    banks["food"] = [
-        {"title": "Breakfast street-food lane", "description": "Start with local breakfast specialties at a bustling lane.", "estimated_cost": 8, "duration_minutes": 45, "location": "Market Lane"},
-        {"title": "Local market tasting", "description": "Sample regional produce and small bites at the morning market.", "estimated_cost": 15, "duration_minutes": 60, "location": "Main Market"},
-        {"title": "Signature restaurant meal", "description": "Enjoy a curated tasting menu at a noted local restaurant.", "estimated_cost": 45, "duration_minutes": 90, "location": "Gourmet Quarter"},
-        {"title": "Dessert and tea stop", "description": "Relax with a local dessert and tea at a cosy café.", "estimated_cost": 12, "duration_minutes": 40, "location": "Tea Street"},
-        {"title": "Evening snack street", "description": "Walk a lively snack street sampling quick evening treats.", "estimated_cost": 10, "duration_minutes": 50, "location": "Snack Alley"},
-    ]
-
-    banks["outdoor"] = [
-        {"title": "Lakefront walk", "description": "A gentle walk along the lakefront with scenic views.", "estimated_cost": 0, "duration_minutes": 60, "location": "Lakeside"},
-        {"title": "City park reset", "description": "Relax in a spacious city park and observe local life.", "estimated_cost": 0, "duration_minutes": 50, "location": "Central Park"},
-        {"title": "Scenic viewpoint", "description": "Short hike to a viewpoint overlooking the city.", "estimated_cost": 0, "duration_minutes": 80, "location": "Hilltop View"},
-        {"title": "Garden or nature trail", "description": "Stroll through curated gardens and nature trails.", "estimated_cost": 5, "duration_minutes": 70, "location": "Botanic Garden"},
-    ]
-
-    banks["museums"] = [
-        {"title": "City museum visit", "description": "Explore the city museum with local exhibits.", "estimated_cost": 12, "duration_minutes": 90, "location": "Museum District"},
-        {"title": "Special exhibition", "description": "See a featured temporary exhibition.", "estimated_cost": 18, "duration_minutes": 75, "location": "Exhibit Hall"},
-        {"title": "Architectural tour", "description": "Guided look at historic buildings and museum architecture.", "estimated_cost": 10, "duration_minutes": 60, "location": "Old Quarter"},
-    ]
-
-    banks["culture"] = [
-        {"title": "Historic neighbourhoods", "description": "Wander through historic streets and learn local stories.", "estimated_cost": 0, "duration_minutes": 80, "location": "Historic District"},
-        {"title": "Local cultural center", "description": "Visit a cultural center with performances or workshops.", "estimated_cost": 20, "duration_minutes": 90, "location": "Cultural Center"},
-        {"title": "Guided heritage walk", "description": "Join a short guided walk focused on history and culture.", "estimated_cost": 12, "duration_minutes": 70, "location": "Heritage Trail"},
-    ]
-
-    banks["nightlife"] = [
-        {"title": "Live music evening", "description": "Enjoy live local music at a neighbourhood venue.", "estimated_cost": 20, "duration_minutes": 120, "location": "Music Row"},
-        {"title": "Cocktail bar crawl", "description": "Sample crafted cocktails at a trio of bars.", "estimated_cost": 35, "duration_minutes": 150, "location": "Bar Street"},
-        {"title": "Local performance", "description": "Attend a short theatrical or dance performance.", "estimated_cost": 25, "duration_minutes": 90, "location": "Town Theatre"},
-    ]
-
-    banks["family"] = [
-        {"title": "Interactive science center", "description": "Hands-on exhibits for all ages.", "estimated_cost": 18, "duration_minutes": 120, "location": "Science Center"},
-        {"title": "Urban zoo visit", "description": "See animals and enjoy family-friendly shows.", "estimated_cost": 22, "duration_minutes": 150, "location": "City Zoo"},
-        {"title": "Boat ride and picnic", "description": "Short boat trip with a picnic in a park.", "estimated_cost": 15, "duration_minutes": 100, "location": "River Pier"},
-    ]
-
-    banks["shopping"] = [
-        {"title": "Crafts market browsing", "description": "Browse handmade goods and local crafts.", "estimated_cost": 10, "duration_minutes": 60, "location": "Craft Market"},
-        {"title": "Boutique street walk", "description": "Explore boutique shops and designer stores.", "estimated_cost": 30, "duration_minutes": 90, "location": "Shopping Street"},
-        {"title": "Outlet or local mall", "description": "Visit a larger shopping center for variety.", "estimated_cost": 20, "duration_minutes": 120, "location": "City Mall"},
-    ]
-
-    # Ensure every interest has a bank; fallback to culture
-    for it in interests_list:
-        if it not in banks:
-            banks[it] = banks.get("culture", [])
-
-    themes = [
-        "Arrival and orientation",
-        "Local culture and history",
-        "Food and neighbourhoods",
-        "Scenery and slower pace",
-        "Hidden corners and markets",
-        "Final highlights and favourites",
-    ]
-
-    itinerary = []
-    for day in range(1, int(days) + 1):
-        # pick a theme deterministically
-        theme_idx = _det_hash(destination, day, travel_style) % len(themes)
-        theme = themes[theme_idx]
-
-        day_slots = {}
-        slot_names = ["morning", "afternoon", "evening"]
-        picked_sources = []
-        total_cost = 0.0
-        for slot in slot_names:
-            # choose which interest to use for this slot deterministically
-            interest_idx = _det_hash(destination, day, slot, travel_style) % len(interests_list)
-            interest = interests_list[interest_idx]
-            bank = banks.get(interest) or []
-            # ensure non-empty bank
-            if not bank:
-                # fallback to a simple generated activity
-                source = {"title": f"{interest.title()} experience", "description": f"A {interest} activity in {destination}", "estimated_cost": 10}
-            else:
-                pick_idx = _det_hash(destination, day, slot, interest) % len(bank)
-                source = bank[pick_idx]
-            # avoid exact duplicate selection within same day/slot by shifting if already picked
-            attempt = 0
-            while source in picked_sources and attempt < 3:
-                pick_idx = (pick_idx + 1) % len(bank) if bank else pick_idx
-                source = bank[pick_idx] if bank else source
-                attempt += 1
-            picked_sources.append(source)
-            activity = make_activity(source, time_window=slot, budget=budget_norm, destination=destination)
-            total_cost += float(activity.get("estimated_cost", 0.0))
-            day_slots[slot] = activity
-
-        budget_note = round(total_cost, 2)
-        day_obj = {
-            "day": day,
-            "theme": theme,
-            "morning": day_slots["morning"],
-            "afternoon": day_slots["afternoon"],
-            "evening": day_slots["evening"],
-            "budget_note": budget_note,
-        }
-        itinerary.append(day_obj)
-
-    return itinerary
 
 def create_error(message, status_code=400, field=None):
-    """
-    Create a consistent JSON error response for validation failures.
-    """
-    payload = {"error": str(message)}
+    err = {"error": message}
     if field:
-        payload["fields"] = field
-    return make_response(jsonify(payload), int(status_code))
+        err["field"] = field
+    return jsonify(err), status_code
 
-@app.route("/health", methods=["GET"])
+def build_itinerary(destination, days, budget, interests, travel_style):
+    # Build per-interest banks (14 morning/14 afternoon/14 evening per interest)
+    # Templates for each interest
+    banks = {}
+    def make_bank(name, morning_bases, afternoon_bases, evening_bases):
+        banks[name] = {
+            "morning": [{"title": t, "description": f"{t} to start your morning."} for t in morning_bases],
+            "afternoon": [{"title": t, "description": f"{t} as a daytime activity."} for t in afternoon_bases],
+            "evening": [{"title": t, "description": f"{t} perfect for the evening."} for t in evening_bases],
+        }
+    # Food bank
+    food_morning = ["Local Breakfast Market","Tea House Tasting","Bakery Stop","Neighborhood Noodle Stop","Morning Produce Market","Coffee Roastery Visit","Street-Food Breakfast Lane","Pastry Sampling Walk","Riverside Cafe Breakfast","Food Hall Morning Tour","Traditional Breakfast Table","Market Coffee & Buns","Casual Breakfast Counter","Sunrise Cafe Session"]
+    food_afternoon = ["Casual Lunch Counter","Cooking Mini-Workshop","Dessert Cafe Visit","Signature Restaurant Lunch","Food Hall Tasting","Neighborhood Food Walk","Market Tasting Session","Farm-to-Table Lunch","Culinary Museum Stop","Bakery Workshop","Street Food Sampling","Tea Pairing Session","Lunch at Riverside","Local Deli Stop"]
+    food_evening = ["Evening Snack Street","Supper Club","Food Night Market","Chef's Table Experience","Rooftop Dinner","Small-Plate Crawl","Night Food Stalls","Local Dinner Alley","Seafood Night Market","Late Dessert Crawl","Evening Tea & Sweets","Nighttime Food Court","Candlelight Bistro","Street-food Evening Loop"]
+    make_bank("food", food_morning, food_afternoon, food_evening)
+    # Outdoor bank
+    out_morning = ["Lakefront Walk","City Park Reset","Garden Trail","Botanical Corner Stroll","Sunrise Hill Path","Old Street Photo Walk","Picnic Stop Morning","Riverside Cycling Start","Seaside Promenade","Forest Edge Walk","Meadow Path Walk","Riverbank Jog","Historic Garden Walk","Quiet Canal Walk"]
+    out_afternoon = ["Scenic Viewpoint","Garden Trail Extended","River Walk","Botanical Corner","Hilltop Picnic","Scenic Boat Ride","Park Exploration","Countryside Lane","Wetland Boardwalk","Heritage Park Visit","Panoramic Lookout","Coastal Cliff Walk","Lakeside Loop","Stately Tree Avenue"]
+    out_evening = ["Sunset Promenade","Evening Waterfront Walk","Harbor Stroll At Dusk","Lakeside Twilight Walk","Golden Hour Viewpoint","Evening Boardwalk","Riverside Lantern Walk","Sunset Hill Path","Seafront Stroll","Nighttime Promenade","Twilight Garden Visit","Moonlight Shore Walk","Evening Pier Walk","Harbor Lights Walk"]
+    make_bank("outdoor", out_morning, out_afternoon, out_evening)
+    # Culture bank
+    cult_morning = ["Heritage Lane Walk","Architectural Stroll","Local History Walk","Historical Church Visit","Old Town Orientation","Monument Walk","Cultural Quarter Stroll","Town Square Stories","Artisan Street Walk","Historical Market Morning","Guided Heritage Talk","Legacy Buildings Walk","Storytelling Corner Visit","Historical House Exterior Tour"]
+    cult_afternoon = ["City Museum Visit","Local History Museum","Cultural Center Tour","Archive Exhibit","Gallery Walk","Heritage Workshop","Artist Studio Visit","Traditional Craft Demonstration","Town Museum Afternoon","Historical House Interior","Museum Special Exhibit","Civic Heritage Tour","Folklore Workshop","Community Museum Stop"]
+    cult_evening = ["Cultural Performance","Traditional Music Night","Folklore Show","Evening Storytelling Session","Heritage Light Walk","Local Theatre Performance","Classical Concert","Dance Evening","Late Museum Event","Cultural Film Night","Nighttime Performance","Craft Night Market","Evening Cultural Salon","Community Music Night"]
+    make_bank("culture", cult_morning, cult_afternoon, cult_evening)
+    # Museums (distinct naming)
+    mus_morning = ["Small Museum Morning","Curator's Talk","Museum Highlights Tour","Gallery Opening Walk","Special Exhibit Preview","Design Museum Start","Museum Collections Start","Maritime Museum Morning","Museum Sketching Session","Archive Morning Visit","Anthropology Displays","Science Center Morning","Local Gallery Breakfast Session","Museum Rooftop Cafe"]
+    mus_afternoon = ["Major Museum Visit","Contemporary Gallery","Interactive Exhibit","Maritime Exhibit","Art Deco Museum","Science Hall Visit","Museum Workshops","Children's Discovery Zone","Temporary Exhibit Tour","Guided Curator Tour","Museum Sculpture Garden","Historical Exhibit","Design Lab Afternoon","Photography Exhibit"]
+    mus_evening = ["Museum Late Night","Gallery Opening Night","Evening Exhibit Talk","Art Reception","Curator Lecture Evening","Museum Concert","Night Gallery Crawl","Artist Talk Night","After-hours Tour","Museum Film Screening","Open Mic at Gallery","Evening Archive Talk","Museum Night Program","Gallery Salon"]
+    make_bank("museums", mus_morning, mus_afternoon, mus_evening)
+    # Nightlife bank
+    night_morning = ["Leisurely Brunch Spot","Late Breakfast Cafe","Recovery Morning Coffee","Lazy Morning Market","Chill Daytime Lounge","Brunch Courtyard","Coffee & People Watch","Late Bakery Visit","Sunday Brunch Route","Brunch Terrace","Morning Cocktail Mocktail","Brunch Pop-up","Weekend Brunch Lane","Brunch Garden"]
+    night_afternoon = ["Vinyl Bar Visit","Cocktail Workshop (afternoon)","Distillery Tour","Rooftop Visit","Live Music Matinee","Barbecue Street Lunch","Jazz Cafe Afternoon","Speakeasy Tour (day)","Mixology Class (day)","Brewer's Tour","Afternoon Taproom","Rooftop Bar Walk","Music Venue Tour","Cultural Bar History"]
+    night_evening = ["Rooftop Cocktails","Live Music Night","Night Market Crawl","Cocktail Bar Hopping","Late-night Jazz","Dance Club Night","Evening Speakeasy","Rooftop DJ Set","Late Street Food & Drinks","Bottle Bar Experience","Night Concert","Stand-up Comedy Night","Evening Pub Quiz","Nighttime Rooftop Lounge"]
+    make_bank("nightlife", night_morning, night_afternoon, night_evening)
+    # Family bank
+    fam_morning = ["Playground Morning","Kid-friendly Museum","Puppet Show Matinee","Family Farm Visit","Interactive Science Morning","Aquarium Morning","Children's Garden","Family Bike Ride","Zoo Morning Visit","Storytime Session","Family Cooking Class","Soft-play Morning","Park with Carousel","Hands-on Workshop"]
+    fam_afternoon = ["Theme Park Afternoon","Aquarium Visit","Interactive Center","Boat Ride for Families","Family Picnic","Children's Workshop","Local Farm Experience","Science Center Afternoon","Educational Show","Mini-golf","Family Market Visit","Ice-cream Trail","Boat Picnic","Family Friendly Walk"]
+    fam_evening = ["Evening Puppet Show","Family Movie Night","Children's Storytime Evening","Night Aquarium Visit","Family-friendly Dinner","Outdoor Cinema","Evening Light Show for Kids","Board Game Cafe Evening","Family Night Market","Stargazing Event","Family Concert","Kid-friendly Theatre","Evening Carousel","Family Lantern Walk"]
+    make_bank("family", fam_morning, fam_afternoon, fam_evening)
+    # Shopping bank
+    shop_morning = ["Artisan Market Stroll","Boutique Street Morning","Antique Lane Visit","Local Market Morning","Design District Walk","Vintage Store Hunt","Farmers Market","Crafts Lane","Market Coffee & Stroll","Souvenir Lane","Morning Flea Market","Handmade Goods Walk","Textile Market","Local Designer Showroom"]
+    shop_afternoon = ["Shopping Arcade","Boutique Hopping","Designer Outlet Visit","Shopping Mall Stroll","Handicraft Workshop","Market Bargain Afternoon","Jewelry Lane","Bookshop Crawl","Artisan Workshops","Department Store Visit","Specialty Food Shops","Craft Market Afternoon","Market Cooking Gear","Local Maker Fair"]
+    shop_evening = ["Night Market Shopping","Evening Boutique Openings","Artisan Night Fair","Late Shopping Arcade","Evening Craft Market","Designer Pop-up Night","Late Bookshop Event","Shopping Street Lights","Night Bazaar","Evening Souvenir Hunt","Handmade Night Market","Fashion Night Out","Night Market Tasting","Evening Collectibles Fair"]
+    make_bank("shopping", shop_morning, shop_afternoon, shop_evening)
+
+    # Ensure every requested interest has a bank; if unknown interest, fallback to culture-like bank
+    for it in interests:
+        if it not in banks:
+            make_bank(it,
+                      [f"{it.title()} Morning Walk {n}" for n in range(1,15)],
+                      [f"{it.title()} Afternoon Experience {n}" for n in range(1,15)],
+                      [f"{it.title()} Evening Event {n}" for n in range(1,15)])
+
+    used_titles_by_slot = {"morning": set(), "afternoon": set(), "evening": set()}
+    rotation_index = {"morning": 0, "afternoon": 0, "evening": 0}
+    itinerary = []
+    dest_sum = sum(ord(c) for c in destination) if destination else 0
+    b = normalize_budget_value(budget)
+    for day in range(1, days+1):
+        slot_objs = {}
+        theme_options = ["arrival and orientation","local culture","food and neighbourhoods","scenery and slower pace","hidden corners","final highlights","heritage focus","market day","relaxation day","active exploration"]
+        theme = theme_options[(day + dest_sum) % len(theme_options)]
+        for slot_i, slot in enumerate(["morning","afternoon","evening"]):
+            # pick interest for this slot deterministically
+            if interests:
+                interest = interests[(day + slot_i + dest_sum) % len(interests)]
+            else:
+                interest = "culture"
+            bank = banks.get(interest, banks.get("culture"))
+            slot_bank = bank.get(slot, [])
+            if not slot_bank:
+                slot_bank = [{"title": f"{interest.title()} {slot.title()} Experience {i}", "description": ""} for i in range(14)]
+            start = (dest_sum + day + slot_i + len(interest)) % len(slot_bank)
+            chosen = None
+            # Find a title not used in this slot
+            for offset in range(len(slot_bank)):
+                idx = (start + offset) % len(slot_bank)
+                title = slot_bank[idx].get("title")
+                if title not in used_titles_by_slot[slot]:
+                    chosen = slot_bank[idx]
+                    used_titles_by_slot[slot].add(title)
+                    rotation_index[slot] = (rotation_index[slot] + 1) % len(slot_bank)
+                    break
+            if chosen is None:
+                # all used, allow reuse but add revisit note in description
+                idx = start
+                chosen = slot_bank[idx].copy()
+                chosen_title = chosen.get("title")
+                chosen_desc = chosen.get("description","")
+                chosen = chosen.copy()
+                chosen["description"] = f"{chosen_desc} Revisited on day {day} as part of a deeper look."
+            act = make_activity(chosen, time_window=slot, budget=b, destination=destination)
+            slot_objs[slot] = act
+        # Budget note derived from sum of estimated costs
+        day_cost = slot_objs["morning"]["estimated_cost"] + slot_objs["afternoon"]["estimated_cost"] + slot_objs["evening"]["estimated_cost"]
+        note = f"Estimated total for the day: ${round(day_cost,2)} for a {b} budget."
+        itinerary.append({
+            "day": day,
+            "theme": theme,
+            "morning": slot_objs["morning"],
+            "afternoon": slot_objs["afternoon"],
+            "evening": slot_objs["evening"],
+            "budget_note": note
+        })
+    return itinerary
+
+@app.route('/health', methods=['GET'])
 def health():
     return jsonify({"status": "ok"})
 
 @app.route("/", methods=["GET"])
 def index():
     return send_from_directory(".", "index.html")
-@app.route("/ui", methods=["GET"])
-def ui():
-    # Minimal frontend with stable IDs and JS functions required by tests.
-    html = """
-    <!doctype html>
-    <html>
-    <head><meta charset="utf-8"><title>Planner UI</title></head>
-    <body>
-    <h1>Travel Itinerary Planner</h1>
-    <form id="plannerForm" onsubmit="return false;">
-      <label>Destination: <input id="destination" name="destination"></label><br>
-      <label>Days: <input id="days" name="days" type="number" min="1" max="14"></label><br>
-      <label>Budget: <input id="budget" name="budget"></label><br>
-      <label>Interests (comma): <input id="interests" name="interests"></label><br>
-      <label>Travel style: <input id="travel_style" name="travel_style"></label><br>
-      <button id="submitBtn" onclick="collectFormData()">Plan Trip</button>
-    </form>
-    <div id="formMessage"></div>
-    <div id="errorMessage" style="color:red"></div>
-    <div id="resultsContainer">
-      <div id="daysContainer"></div>
-    </div>
-    <script>
-    // Stable functions for tests
-    function collectFormData() {
-      setLoading(true);
-      const data = {
-        destination: document.getElementById('destination').value || '',
-        days: parseInt(document.getElementById('days').value || '0', 10),
-        budget: document.getElementById('budget').value || '',
-        interests: (document.getElementById('interests').value || '').split(',').map(s=>s.trim()).filter(Boolean),
-        travel_style: document.getElementById('travel_style').value || ''
-      };
-      if (!validateFormData(data)) { setLoading(false); return; }
-      fetch('/api/itinerary', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(data)
-      }).then(r=>r.json().then(js=>({status:r.status, body:js}))).then(r=>{
-        setLoading(false);
-        if (r.status >= 400) {
-          showError(JSON.stringify(r.body));
-        } else {
-          renderItinerary(r.body);
-        }
-      }).catch(e=>{ setLoading(false); showError(String(e)); });
-    }
-    function validateFormData(data) {
-      const err = [];
-      if (!data.destination) err.push('destination required');
-      if (!(Number.isInteger(data.days) && data.days >=1 && data.days<=14)) err.push('days 1-14');
-      if (err.length) { showError(err.join('; ')); return false; }
-      return true;
-    }
-    function setLoading(isLoading) {
-      document.getElementById('formMessage').textContent = isLoading ? 'Loading...' : '';
-    }
-    function showError(msg) {
-      document.getElementById('errorMessage').textContent = msg;
-    }
-    function formatActivityText(act) {
-      if (!act) return '';
-      if (typeof act === 'string') return act;
-      // Build readable string from object fields.
-      const title = act.title || act.name || '';
-      const desc = act.description || '';
-      const cost = (act.estimated_cost !== undefined) ? ('$'+act.estimated_cost) : '';
-      return title + ' — ' + desc + (cost ? (' ('+cost+')') : '');
-    }
-    function renderActivity(container, act) {
-      const div = document.createElement('div');
-      div.textContent = formatActivityText(act);
-      container.appendChild(div);
-    }
-    function renderDay(dayObj) {
-      const dayDiv = document.createElement('div');
-      dayDiv.className = 'day';
-      const h = document.createElement('h3');
-      h.textContent = 'Day ' + dayObj.day + ' — ' + (dayObj.theme || '');
-      dayDiv.appendChild(h);
-      const morning = document.createElement('div');
-      morning.textContent = 'Morning: ';
-      renderActivity(morning, dayObj.morning);
-      dayDiv.appendChild(morning);
-      const afternoon = document.createElement('div');
-      afternoon.textContent = 'Afternoon: ';
-      renderActivity(afternoon, dayObj.afternoon);
-      dayDiv.appendChild(afternoon);
-      const evening = document.createElement('div');
-      evening.textContent = 'Evening: ';
-      renderActivity(evening, dayObj.evening);
-      dayDiv.appendChild(evening);
-      const note = document.createElement('div');
-      note.textContent = 'Budget note: ' + dayObj.budget_note;
-      dayDiv.appendChild(note);
-      return dayDiv;
-    }
-    function renderItinerary(resp) {
-      document.getElementById('errorMessage').textContent = '';
-      document.getElementById('formMessage').textContent = 'Itinerary for ' + (resp.destination || '') ;
-      const container = document.getElementById('daysContainer');
-      container.innerHTML = '';
-      if (!resp.itinerary || !Array.isArray(resp.itinerary)) {
-        showError('Invalid itinerary');
-        return;
-      }
-      resp.itinerary.forEach(d=>{
-        container.appendChild(renderDay(d));
-      });
-    }
-    </script>
-    </body>
-    </html>
-    """
-    return render_template_string(html)
-
 
 @app.route("/generated_images/<path:filename>", methods=["GET"])
 def generated_image_file(filename):
     return send_from_directory(os.path.join(app.root_path, "generated_images"), filename)
 
-@app.route("/api/itinerary", methods=["POST"])
+@app.route('/api/itinerary', methods=['POST'])
 def api_itinerary():
-    if not request.is_json:
-        return create_error("Expected JSON body", 400)
-    data = request.get_json()
-    # Validate required fields
-    dest = data.get("destination")
+    data = request.get_json(silent=True)
+    if not data:
+        return create_error("Invalid JSON body", 400)
+    destination = data.get("destination")
     days = data.get("days")
-    budget = data.get("budget")
-    interests = data.get("interests")
+    budget = data.get("budget", "medium")
+    interests = normalize_interests(data.get("interests") or [])
     travel_style = data.get("travel_style", "balanced")
-    if not dest or not str(dest).strip():
+    # Validate destination
+    if not destination or not isinstance(destination, str) or not destination.strip():
         return create_error("destination is required", 400, field="destination")
-    # days must be integer between 1 and 14
+    # Validate days
     try:
         days_int = int(days)
     except Exception:
-        return create_error("days must be an integer", 400, field="days")
+        return create_error("days must be an integer between 1 and 14", 400, field="days")
     if days_int < 1 or days_int > 14:
         return create_error("days must be between 1 and 14", 400, field="days")
-    # interests should be list or convertible
-    if interests is None:
-        interests_list = []
-    else:
-        interests_list = interests
+    budget_norm = normalize_budget_value(budget)
     # Build itinerary
-    try:
-        itinerary = build_itinerary(dest, days_int, budget, interests_list, travel_style)
-    except Exception as e:
-        return create_error("Failed to build itinerary: " + str(e), 500)
-    # Tips - simple deterministic tips based on travel style
-    tips_map = {
-        "relaxed": ["Take time at cafés and avoid tight schedules.", "Prioritise one major site per day."],
-        "active": ["Wear comfortable shoes for walks.", "Book activities in advance where possible."],
-        "balanced": ["Mix guided tours with independent exploration.", "Allow a free evening each few days."],
-    }
-    tips = tips_map.get(str(travel_style).lower(), tips_map["balanced"])
-    response_payload = {
-        "destination": str(dest),
+    itinerary = build_itinerary(destination.strip(), days_int, budget_norm, interests or ["culture"], travel_style)
+    overview = f"A {days_int}-day {travel_style} trip to {destination.strip()} focused on {', '.join(interests) if interests else 'general experiences'}."
+    tips = [
+        "Carry a refillable water bottle and comfortable shoes.",
+        "Check opening hours for museums and markets in advance.",
+        "Allow extra time for transit between neighbourhoods.",
+        f"If you prefer a {travel_style} pace, adjust morning/afternoon activities accordingly."
+    ]
+    response = {
+        "destination": destination.strip(),
         "days": days_int,
-        "budget": budget,
-        "interests": normalize_interests(interests_list),
+        "budget": budget_norm,
+        "interests": interests,
         "travel_style": travel_style,
-        "overview": f"A {days_int}-day trip plan for {dest}.",
+        "overview": overview,
         "itinerary": itinerary,
-        "tips": tips,
+        "tips": tips
     }
-    return make_response(jsonify(response_payload), 201)
+    return jsonify(response), 201
 
 
 def slugify(value):
@@ -527,6 +336,6 @@ def api_destination_image():
         logger.exception("Error generating destination image")
         return jsonify({"error": "Image generation failed", "details": str(e)}), 500
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host='0.0.0.0', port=port)

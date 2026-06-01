@@ -4,48 +4,36 @@ participant Website
 participant "Flask API" as API
 participant APIFree
 
-User -> Website : Submit travel preferences\ncollectFormData(plannerForm: destination, days, budget, interests, travel_style)
+User -> Website: Submit plannerForm
 activate Website
-
-Website -> Website : validateFormData(data)
-alt invalid input (frontend)
-  Website -> User : showError(errorMessage)\n(errorMessage element id: errorMessage)
-  deactivate Website
-else valid input
-  Website -> Website : setLoading(true)\n(formMessage id: formMessage)
-  Website -> API : GET /health
+Website -> Website: collectFormData()
+Website -> Website: validateFormData()
+alt valid
+  Website -> API: POST /api/itinerary
   activate API
-  API --> Website : 200 OK
+  API -> API: build stable itinerary
+  API --> Website: 200 OK (itinerary)
   deactivate API
-
-  Website -> API : POST /api/itinerary\n{ destination, days, budget, interests, travel_style }
+  Website -> Website: renderItinerary()
+  Website -> API: GET /api/image?prompt=itinerary
   activate API
-  API -> API : expand interests into concrete activities\nrotate morning/afternoon/evening per day\nbuild itinerary list length == days\nensure each day has: day, morning, afternoon, evening, budget_note
-  alt API validation error
-    API --> Website : 400 Bad Request\n{ "error": "invalid input" }
-    deactivate API
-
-    Website -> User : showError(errorMessage)
-    Website -> Website : setLoading(false)
-    deactivate Website
-  else successful itinerary
-    API --> Website : 200 OK\n{ destination, days, budget, interests, travel_style,\n  overview, itinerary: [ {day, morning:{title,description,cost}, afternoon:{...}, evening:{...}, budget_note}, ... ], tips }
-    deactivate API
-
-    Website -> Website : renderItinerary(itinerary)\n(render to resultsContainer/daysContainer)
-    Website -> Website : for each day:\nrenderDay(day) -> renderActivity(morning/afternoon/evening)\nformatActivityText(title, description, cost)
-    Website -> API : GET /api/image?query={destination}
-    activate API
-    API -> APIFree : Request image for destination
-    activate APIFree
-    APIFree --> API : image_url
-    deactivate APIFree
-    API --> Website : image_url
-    deactivate API
-
-    Website -> User : display itinerary and image\n(rendered into resultsContainer)
-    Website -> Website : setLoading(false)
-    deactivate Website
-  end
+  API -> APIFree: GET /generate?prompt=itinerary
+  activate APIFree
+  APIFree --> API: 200 OK (image_url)
+  deactivate APIFree
+  API --> Website: 200 OK (image_url)
+  deactivate API
+  Website -> User: Display itinerary & image
+else invalid
+  Website -> User: showError
 end
+Website -> Website: setLoading(false)
+deactivate Website
+
+note right of Website
+IDs: plannerForm,destination,days,budget,interests,travel_style,
+resultsContainer,daysContainer,formMessage,errorMessage
+Funcs: collectFormData,validateFormData,setLoading,showError,
+renderItinerary,renderDay,renderActivity,formatActivityText
+end note
 @enduml

@@ -1,37 +1,32 @@
 @startuml
-left to right direction
-skinparam packageStyle rectangle
-
 actor Tourist
-actor "Travel Agency Assistant" as Assistant
+actor "Travel Agency Assistant" as TravelAgent
 
 rectangle "Travel Planner Generator" {
-  usecase "Entering Preferences" as UC_Enter
-  usecase "Validating Input" as UC_Validate
-  usecase "Generating an Itinerary" as UC_Generate
-  usecase "Viewing Readable Day Plans" as UC_View
-  usecase "Requesting a Destination Image" as UC_Image
-  usecase "Running Tests" as UC_Tests
-  usecase "Deploying with Docker" as UC_Docker
+  usecase "Enter Preferences" as EnterPreferences
+  usecase "Validate Input" as ValidateInput
+  usecase "Generate Itinerary" as GenerateItinerary
+  usecase "View Day Plans" as ViewDayPlans
+  usecase "Request Destination Image" as RequestImage
+  usecase "Run Tests" as RunTests
+  usecase "Deploy with Docker" as DeployDocker
 }
 
-' Primary actor interactions
-Tourist -- UC_Enter
-Tourist -- UC_Generate
-Tourist -- UC_View
+Tourist --> EnterPreferences
+Tourist --> GenerateItinerary
+Tourist --> ViewDayPlans
+Tourist --> RequestImage
 
-Assistant -- UC_Validate
-Assistant -- UC_Image
-Assistant -- UC_Tests
-Assistant -- UC_Docker
-Assistant -- UC_Generate
+TravelAgent --> RunTests
+TravelAgent --> DeployDocker
+TravelAgent --> GenerateItinerary
+TravelAgent --> ViewDayPlans
 
-' Use case relationships
-UC_Enter .> UC_Validate : <<include>>
-UC_Generate .> UC_Validate : <<include>>
-UC_View .> UC_Generate : <<include>>
-UC_Image ..> UC_View : <<extend>>
-UC_Tests .> UC_Generate : <<include>>
-UC_Docker .> UC_Tests : <<include>>
-
+EnterPreferences ..> ValidateInput : include
+GenerateItinerary ..> ValidateInput : include
+GenerateItinerary ..> EnterPreferences : include
+GenerateItinerary ..> ViewDayPlans : include
+RequestImage ..> ViewDayPlans : include
+RunTests ..> ValidateInput : include
+DeployDocker ..> RunTests : include
 @enduml
