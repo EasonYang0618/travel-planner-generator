@@ -2,6 +2,8 @@
 
 DTS114TC AI Software Engineering coursework project.
 
+> **Note on AI-generated artefacts:** Because this project uses AI to generate code and documentation, there is a small chance that one regenerated output may differ and cause a test issue. The submitted version has been tested, but if this happens after re-running the notebook, please run the notebook again to regenerate the artefacts.
+
 This project builds an AI-powered system for meta-software development. It generates SDLC documentation, UML diagrams, a Flask API, a travel planning website, tests, CI workflow configuration, and Docker deployment files.
 
 The selected business problem is a travel planner website. Users enter a destination, trip length, budget, interests, and travel style. The generated Flask API returns a day-by-day itinerary, and the website requests an AI-generated destination image at runtime.

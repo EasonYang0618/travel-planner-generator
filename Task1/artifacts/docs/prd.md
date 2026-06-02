@@ -1,101 +1,93 @@
 Overview
-- Build a small web application for a travel agency that generates personalised city travel itineraries. 
-- Provide both a Flask API and a single-page website UI. Users supply destination, trip length (days), budget level, interests, and travel_style; system returns a clear day-by-day itinerary plus tips.
+A small travel-agency web application that generates personalised city travel itineraries. Users provide destination, trip length (days), budget level, interests, and travel style. The system exposes a Flask JSON API and a browser frontend that submits the form to the API and renders a clear day-by-day itinerary. The app must be deterministic and testable for coursework automated checks and deployable via Docker.
 
 Goals
-- Deliver a stable, well-documented Flask API that can be automatically exercised by tests.
-- Deliver a readable, deterministic frontend that renders itineraries for humans and passes automated checks.
-- Ensure itinerary content is varied, concrete, human-readable, and budget-aware.
-- Make the system Docker-deployable so it can run reproducibly in CI and in class demos.
-- Provide an integration path for later AI image support (handled by a separate image-agent contract).
+- Provide reliable, human-readable, day-by-day itineraries that match user inputs.
+- Maintain a stable, well-documented API contract for automated verification.
+- Ensure frontend readability and deterministic rendering (no raw objects shown).
+- Prepare integration points (placeholders/hooks) for later AI-generated images without rendering them.
+- Ship with automated tests (pytest) that validate API and generation rules.
+- Support containerised deployment with a reproducible Docker image.
 
 Scope
 In scope
-- Flask API with health check and itinerary endpoint.
-- Single-page frontend (HTML/JS/CSS) that posts to the API, validates input, and renders results.
-- Deterministic itinerary generation logic that expands interests into concrete activities and rotates activities across morning/afternoon/evening.
-- Automated pytest suite verifying API contract, content rules, and frontend DOM stability where practical.
-- Dockerfile(s) and basic docker-compose for single-container deployment.
-- Documentation describing API input/output, stable IDs and functions, and how to run tests and Docker.
+- Flask backend exposing GET /health and POST /api/itinerary.
+- POST /api/itinerary accepts: destination, days, budget, interests, travel_style.
+- Deterministic itinerary generation logic that:
+  - Expands each interest into multiple concrete activities before assembling the itinerary.
+  - Produces an itinerary list with length equal to days.
+  - Rotates morning/afternoon/evening items using destination, day number, time slot and interests so daily activities do not repeat the same fallback.
+  - Assigns a day theme/focus where possible.
+  - Produces human-readable activity titles/descriptions and numeric estimated costs adjusted by budget.
+  - Each itinerary day includes: day, morning, afternoon, evening, budget_note.
+- Frontend (single-page) that posts to the API and renders results using stable IDs and functions.
+- pytest suite covering API endpoints, response schema, generation rules and determinism.
+- Dockerfile(s) and simple docker-compose for running app and tests.
 
 Out of scope
-- AI image generation or image preview rendering in the frontend (the frontend must not create its own image preview area). Image generation/integration will be provided later by a dedicated frontend image contract agent.
-- External booking/payment or live maps integration.
+- Generating or displaying AI images inside the frontend (image rendering is handled later by a separate image contract agent).
+- Third-party booking integrations, payment processing, or user accounts.
 
-Constraints (technical and quality contract)
-- API endpoints:
-  - GET /health — returns 200 with simple health JSON.
-  - POST /api/itinerary — accepts JSON with keys: destination, days, budget, interests, travel_style.
-- Input validation:
-  - Invalid or missing inputs must return HTTP 400 with a JSON error object {error: "..."}.
-  - days must be an integer >= 1.
-  - budget must be a recognized level (mapped internally to numeric adjustments).
-  - interests must be a list/array.
-- Response shape (successful response must include all top-level keys):
-  - destination (string), days (int), budget (string or canonical key), interests (list), travel_style (string),
-  - overview (string),
-  - itinerary (list of day objects) length must equal days,
-  - tips (list or string).
-- Per-day structure: each day object must include keys: day (int), morning, afternoon, evening, budget_note.
-- Activities:
-  - Activity titles/descriptions must be human-readable strings (no raw objects, no "[object Object]").
-  - Activity entries may be objects internally, but frontend must render readable text fields only.
-  - Estimated costs must be numeric values adjusted by budget (not textual low/medium/high).
-- Content variability rules:
-  - Expand each interest into several concrete activities before building the itinerary (e.g., food -> several concrete items; outdoor -> multiple outdoor items).
-  - Itinerary activities must not repeat the same generic fallback each day.
-  - Rotate morning/afternoon/evening items using destination, day number, time slot, and user interests to avoid visible repetition.
-  - Where feasible, assign a different theme/focus to each day.
-- Frontend stability:
-  - Stable element IDs (must exist): plannerForm, destination, days, budget, interests, travel_style, resultsContainer, daysContainer, formMessage, errorMessage.
-  - Stable JS functions (must exist): collectFormData, validateFormData, setLoading, showError, renderItinerary, renderDay, renderActivity, formatActivityText.
-  - The frontend must not create its own image preview area; any image placeholders or insertion points are handled later by the image agent.
-- Determinism:
-  - Generated code and itinerary generation should be deterministic (seedable random or algorithmic) so automated pytest checks can reliably reproduce outputs.
-- Deployment:
-  - Application must be Docker-ready with a Dockerfile and instructions for running tests in the container.
+Constraints
+- API stability: endpoints and request/response schema must be exact and stable for automated checks.
+- Determinism: generation must be deterministic (no unseeded randomness); if randomness is needed it must be seedable and the seed must be controllable during tests.
+- Frontend readability: UI must never display raw dictionaries or "[object Object]"; activity titles and descriptions must be plain strings.
+- Input validation: invalid or missing required fields must return HTTP 400 with a JSON error object and appropriate message.
+- No frontend image preview area or autonomous image requests; provide named placeholders/hooks for later image integration.
+- Performance: generate typical itinerary responses within reasonable time (e.g., < 1s median in test environment).
+- Deployment: must run inside Docker with clear environment configuration and health check endpoint.
 
-Success Criteria (must be met for acceptance)
-- API stability and contract:
-  - GET /health returns HTTP 200 and JSON health status.
-  - POST /api/itinerary accepts destination, days, budget, interests, travel_style and validates input.
-  - Invalid input returns HTTP 400 with JSON error object.
-  - Successful responses include top-level destination, days, budget, interests, travel_style, overview, itinerary, tips.
-  - The itinerary list length equals days.
-  - Each itinerary day contains day, morning, afternoon, evening, budget_note.
-  - Estimated cost fields are numeric and adjusted according to budget level.
-  - Activities are human-readable strings when rendered; the frontend never displays raw objects or “[object Object]”.
-- Frontend readability and stability:
-  - Frontend uses the specified stable IDs and implements the specified stable functions.
-  - Frontend renders results into resultsContainer and daysContainer and uses formatActivityText to produce readable text.
-  - Frontend shows errors in errorMessage and form messages in formMessage.
-  - Frontend does not create an image preview area (satisfies separation of concerns for later image integration).
-- AI image integration readiness:
-  - The frontend and API expose clear insertion points (no image UI elements created) so a later image agent can add images without changing the core app.
-  - Metadata required for images (e.g., activity title, location, time) is present in API responses so an image agent can generate appropriate prompts.
-- Content quality and non-repetition:
-  - Each interest is expanded into multiple concrete activities before scheduling.
-  - The generator rotates and varies morning/afternoon/evening activities across days (no same fallback repeated).
-  - Each day attempts a different theme or focus where possible.
-- Automated tests:
-  - Pytest suite exists and validates: endpoints, input validation, response shape, itinerary length, per-day fields, numeric cost adjustments, non-repetition rules, stable frontend IDs and function names (where testable).
-  - Tests are deterministic (use seeded randomness or algorithmic determinism) and runnable inside CI or locally.
-- Docker deployment:
-  - A Dockerfile (and optional docker-compose) builds and runs the app and tests.
-  - The app can be launched in Docker and responds correctly to /health and /api/itinerary.
-- Deterministic generation for coursework checks:
-  - Itinerary generation is deterministic for a given seed/input so automated coursework graders can compare expected outputs.
+Success Criteria
+API stability
+- Expose GET /health returning 200 OK and a simple JSON status.
+- Expose POST /api/itinerary accepting JSON body with keys: destination, days, budget, interests, travel_style.
+- POST /api/itinerary on success returns JSON containing top-level keys: destination, days, budget, interests, travel_style, overview, itinerary, tips.
+- Invalid input returns HTTP 400 and a JSON error object describing the problem.
+- The itinerary array length equals the requested days.
 
-Notes / Acceptance checklist (short)
-- [ ] /health implemented and passes.
-- [ ] /api/itinerary implemented, validates input, returns exact response keys.
-- [ ] Itinerary length equals days; per-day fields present.
-- [ ] Interests expanded into multiple concrete activities.
-- [ ] Morning/afternoon/evening rotation and day themes implemented.
-- [ ] Costs numeric and budget-adjusted.
-- [ ] Frontend uses stable IDs and functions; renders readable strings only.
-- [ ] Frontend does not create image preview; image metadata included in API response.
-- [ ] Pytest suite passes deterministically.
-- [ ] Dockerfile and run instructions included.
+Frontend readability and stability
+- Frontend uses stable DOM IDs: plannerForm, destination, days, budget, interests, travel_style, resultsContainer, daysContainer, formMessage, errorMessage.
+- Frontend defines and uses stable functions: collectFormData, validateFormData, setLoading, showError, renderItinerary, renderDay, renderActivity, formatActivityText.
+- Frontend renders human-readable strings for activity titles/descriptions and numeric estimated costs; never displays raw objects or “[object Object]”.
+- The frontend must not create its own image preview area; instead it exposes a named placeholder hook or metadata attributes for later image injection by the image contract agent.
 
-This PRD is intentionally concise and focused on requirements and acceptance criteria that a coursework implementation and automated tests can verify.
+AI image integration
+- Provide a clear, documented hook in API responses and/or frontend DOM for later AI image integration (e.g., image_tags or activity.image_hint strings, and well-known DOM attributes on activity elements) without embedding or previewing images now.
+- The application itself must not fetch or render images; it must be ready to accept image URLs or image metadata later.
+
+Itinerary generation quality
+- Interests are expanded into multiple concrete activities before itinerary construction (for example: food => breakfast street-food lane, local market tasting, signature restaurant meal, dessert and tea stop, evening snack street).
+- Activities rotate by time slot and day so the same fallback is not used each day; morning/afternoon/evening slots should vary using destination + day number + time slot + interest.
+- Each day should, where possible, have a different theme or planning focus.
+- Activity titles/descriptions are human-readable strings; any activity data objects rendered by frontend are formatted into readable text by formatActivityText.
+- Estimated costs are numeric and adjusted by budget parameter; budget_note explains cost scaling numerically.
+
+Automated tests
+- Provide pytest tests that verify:
+  - /health and /api/itinerary endpoints respond correctly and deterministically.
+  - POST /api/itinerary validates inputs and returns HTTP 400 on invalid requests.
+  - Response schema contains required top-level keys.
+  - itinerary length == days.
+  - No repeated generic fallback across days; rotation rules apply.
+  - Activity titles/descriptions are strings; estimated_costs are numeric.
+  - Each itinerary day includes day, morning, afternoon, evening, budget_note.
+  - Frontend renders readable strings (unit tests or headless DOM tests can assert the absence of “[object Object]” and presence of stable IDs/functions).
+- Tests must be deterministic and runnable in CI; randomness, if present, must be seed-controlled in tests.
+
+Docker deployment
+- Provide Dockerfile(s) that build the Flask app and serve static frontend (single container acceptable).
+- Provide docker-compose.yml for local development/test orchestration and for running pytest inside the container environment.
+- Health endpoint must be usable by container orchestration to determine readiness.
+- Build artifacts and runtime must be deterministic and runnable by automated graders.
+
+Acceptance checklist (short)
+- GET /health exists and returns 200 JSON.
+- POST /api/itinerary accepts required fields and returns required top-level keys.
+- itinerary length equals days and each day contains required slots and budget_note.
+- Interests expanded into multiple activities; rotation of slots prevents repeating same fallback.
+- Activity titles/descriptions are strings; estimated costs numeric and budget-adjusted.
+- Frontend uses stable IDs and functions; never renders raw objects; provides hooks for image integration but no preview area.
+- pytest suite covers contract and deterministic behavior.
+- Dockerfile/docker-compose provided and app runs in container with /health reachable.
+
+This PRD defines the minimal, verifiable contract required for coursework grading while leaving image rendering to a later agent integration step.

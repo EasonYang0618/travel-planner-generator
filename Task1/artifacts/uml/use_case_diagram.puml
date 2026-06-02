@@ -1,29 +1,30 @@
 @startuml
-actor Tourist
+actor "Tourist" as Tourist
 actor "Travel Agency Assistant" as Assistant
 
-rectangle "Travel Planner System" {
-  usecase EnterPrefs as "Enter Preferences"
-  usecase ValidateInput as "Validate Input"
-  usecase GenerateItinerary as "Generate Itinerary"
-  usecase ViewDayPlans as "View Day Plans"
-  usecase RequestImage as "Request Destination Image"
-  usecase RunTests as "Run Tests"
-  usecase DeployDocker as "Deploy with Docker"
+rectangle "Travel Planner Generator" {
+usecase "Enter Preferences" as UC1
+usecase "Validate Input" as UC2
+usecase "Generate Itinerary" as UC3
+usecase "View Day Plans" as UC4
+usecase "Request Destination Image" as UC5
+usecase "Run Tests" as UC6
+usecase "Deploy with Docker" as UC7
 }
 
-Tourist --> EnterPrefs
-Tourist --> ViewDayPlans
-Tourist --> RequestImage
+Tourist --> UC1
+Tourist --> UC4
+Tourist --> UC5
 
-Assistant --> ValidateInput
-Assistant --> GenerateItinerary
-Assistant --> RunTests
-Assistant --> DeployDocker
+Assistant --> UC1
+Assistant --> UC3
+Assistant --> UC6
+Assistant --> UC7
 
-EnterPrefs ..> ValidateInput : include
-GenerateItinerary ..> ValidateInput : include
-GenerateItinerary ..> ViewDayPlans : include
-GenerateItinerary ..> RequestImage : include
-RunTests ..> GenerateItinerary : include
+UC1 ..> UC2 : includes
+UC3 ..> UC2 : includes
+UC3 ..> UC4 : includes
+UC5 ..> UC3 : includes
+UC6 ..> UC3 : includes
+UC7 ..> UC6 : includes
 @enduml
