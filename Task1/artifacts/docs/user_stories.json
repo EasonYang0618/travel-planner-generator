@@ -3,63 +3,62 @@
     {
       "id": "US1",
       "role": "Tourist",
-      "goal": "Generate a clear, day-by-day personalised city itinerary by submitting destination, trip length, budget level, interests, and travel style to the backend API",
-      "benefit": "Quickly get a practical plan I can follow each day of my trip",
+      "goal": "Generate a personalised day-by-day city itinerary from the web app by entering destination, trip length, budget, interests and travel style",
+      "benefit": "Get a clear, ready-to-follow plan that matches my time, budget and interests",
       "acceptance_criteria": [
-        "The Flask API exposes GET /health which returns HTTP 200 when healthy",
-        "The Flask API exposes POST /api/itinerary and accepts JSON with destination, days, budget, interests, and travel_style",
-        "Valid POST /api/itinerary returns HTTP 200 and a JSON body containing top-level fields: destination, days, budget, interests, travel_style, overview, itinerary, and tips",
-        "For valid requests the itinerary array length equals the requested days",
-        "Invalid or malformed input returns HTTP 400 with a JSON error object explaining the validation failure"
+        "The Flask API exposes GET /health that returns 200 and a basic JSON status",
+        "The Flask API exposes POST /api/itinerary and accepts JSON payload with keys: destination, days, budget, interests, travel_style",
+        "A successful POST /api/itinerary response returns HTTP 200 and a JSON object containing top-level keys: destination, days, budget, interests, travel_style, overview, itinerary, tips",
+        "The itinerary array length equals the numeric days value provided in the request",
+        "Invalid or missing required input returns HTTP 400 with a JSON error object describing the problem"
       ]
     },
     {
       "id": "US2",
-      "role": "Traveler using the website",
-      "goal": "Use the web form to submit trip parameters and view a rendered, readable day-by-day itinerary on the page",
-      "benefit": "Easily interact with the planner in the browser without calling the API manually",
+      "role": "Backend developer / tester",
+      "goal": "Implement a stable, deterministic itinerary generation contract that automated tests and Docker deployment can rely on",
+      "benefit": "Ensure repeatable outputs for pytest checks and predictable production behaviour",
       "acceptance_criteria": [
-        "The frontend form uses stable element IDs: plannerForm, destination, days, budget, interests, travel_style, resultsContainer, daysContainer, formMessage, errorMessage",
-        "The frontend implements stable functions: collectFormData, validateFormData, setLoading, showError, renderItinerary, renderDay, renderActivity, and formatActivityText",
-        "The frontend calls POST /api/itinerary and handles HTTP 200 responses by rendering the overview, itinerary, and tips into resultsContainer/daysContainer",
-        "The frontend never creates an image preview area (image integration handled later)",
-        "Frontend rendering must show human-readable activity titles/descriptions and must not render raw '[object Object]' for activity data"
+        "POST /api/itinerary behaviour is deterministic for the same inputs (no unstabilized randomness in outputs)",
+        "All activity titles and descriptions in the response are human-readable strings (no raw objects like [object Object])",
+        "Activity entries may be objects but include readable fields the frontend can render; estimated costs are numeric values (not strings)",
+        "The API never creates or requires an image preview area in responses (image integration is handled separately)"
       ]
     },
     {
       "id": "US3",
-      "role": "Product owner / API consumer",
-      "goal": "Rely on a stable response contract so automated tests and downstream components can parse itinerary data deterministically",
-      "benefit": "Automated pytest checks and Docker deployment succeed without flaky behavior",
+      "role": "Product owner / content designer",
+      "goal": "Produce varied, non-repeating multi-day itineraries that expand interests into many concrete activities and rotate time-slot items",
+      "benefit": "Tourists experience fresh, themed daily plans rather than repeating generic suggestions",
       "acceptance_criteria": [
-        "Successful itinerary responses contain the required top-level keys in a deterministic order and format suitable for automated checks",
-        "Each itinerary day object includes numeric day, morning, afternoon, evening, and budget_note fields; activity fields may be objects but must render as readable strings in the frontend",
-        "Estimated costs are numeric values and are adjusted by the provided budget input (not strings like 'low/medium/high')",
-        "The service behavior is deterministic (no random seeds changing between runs) so tests and CI/Docker reproduce the same structure given the same input"
+        "Each declared interest is expanded into multiple distinct concrete activities before assembling the itinerary (e.g., food -> street breakfast, market tasting, signature restaurant, dessert stop, evening snack)",
+        "Daily activities rotate by morning, afternoon and evening and use destination, day number, time slot and user interests to vary titles so the same generic fallback is not repeated",
+        "Where possible each day has a different theme or planning focus and activities reflect that theme",
+        "No single three-activity set is visibly repeated across multiple days"
       ]
     },
     {
       "id": "US4",
-      "role": "Itinerary content designer / Backend developer",
-      "goal": "Ensure multi-day itineraries do not repetitively present the same limited activities and each day has a distinct focus",
-      "benefit": "Users receive varied, realistic daily plans that feel tailored and avoid boring repetition",
+      "role": "Frontend developer",
+      "goal": "Render API results into a web UI using a stable set of IDs and helper functions so automated checks can validate the front-end",
+      "benefit": "Maintainable UI that integrates reliably with the backend contract and test harness",
       "acceptance_criteria": [
-        "Each declared interest is expanded into several concrete activities before building the itinerary (e.g., 'food' expands into multiple food-related activities)",
-        "Activity selection rotates across morning, afternoon, and evening slots and uses destination, day number, time slot, and user interests to avoid repeating the same generic fallback each day",
-        "Each day should attempt a different theme or planning focus when possible (e.g., 'historic', 'foodie', 'outdoors')",
-        "Activity titles and descriptions are human-readable strings (no raw dictionaries or '[object Object]')"
+        "The frontend uses the stable element IDs: plannerForm, destination, days, budget, interests, travel_style, resultsContainer, daysContainer, formMessage, errorMessage",
+        "The frontend implements the stable functions: collectFormData, validateFormData, setLoading, showError, renderItinerary, renderDay, renderActivity, formatActivityText",
+        "renderActivity and formatActivityText produce readable text from activity objects so the UI never displays raw object serialization like [object Object]",
+        "The frontend does not create its own image preview area"
       ]
     },
     {
       "id": "US5",
-      "role": "Developer responsible for error handling and frontend-backend contract",
-      "goal": "Provide clear validation, stable IDs/functions, and predictable error responses so the frontend can present helpful feedback",
-      "benefit": "Users get immediate, actionable error messages and the UI code remains aligned with the API contract",
+      "role": "Quality assurance engineer",
+      "goal": "Verify per-day structure and budget handling in itinerary responses to ensure clarity and correct numeric cost adjustments",
+      "benefit": "Users receive clear daily budgets and cost estimates that match their selected budget level",
       "acceptance_criteria": [
-        "POST /api/itinerary validates required fields (destination, days, budget, interests, travel_style) and returns HTTP 400 with a JSON error object for missing/invalid values",
-        "The frontend validateFormData function mirrors server-side validation rules and displays errors in errorMessage",
-        "The frontend uses setLoading and showError to communicate request state and errors consistently using the stable IDs",
-        "The frontend renderActivity and formatActivityText functions produce readable text for any activity objects returned by the API"
+        "Each itinerary day object includes keys: day (numeric or string day label), morning, afternoon, evening, and budget_note",
+        "Each activity includes an estimated_cost numeric field; values are adjusted by the requested budget level (not textual low/medium/high)",
+        "Each day's budget_note explains the day's expected spend in readable text and is consistent with summed estimated_costs for that day",
+        "The top-level response includes a tips field with human-readable guidance for the trip"
       ]
     }
   ]

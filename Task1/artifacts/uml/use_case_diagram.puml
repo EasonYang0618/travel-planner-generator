@@ -3,28 +3,25 @@ actor "Tourist" as Tourist
 actor "Travel Agency Assistant" as Assistant
 
 rectangle "Travel Planner Generator" {
-usecase "Enter Preferences" as UC1
-usecase "Validate Input" as UC2
-usecase "Generate Itinerary" as UC3
-usecase "View Day Plans" as UC4
-usecase "Request Destination Image" as UC5
-usecase "Run Tests" as UC6
-usecase "Deploy with Docker" as UC7
+ usecase "Enter Preferences" as UC1
+ usecase "Validate Input" as UC2
+ usecase "Generate Itinerary" as UC3
+ usecase "View Day Plans" as UC4
+ usecase "Request Destination Image" as UC5
+ usecase "Run Tests" as UC6
+ usecase "Deploy with Docker" as UC7
 }
 
 Tourist --> UC1
+UC1 ..> UC2 : includes
+UC2 ..> UC3 : includes
+UC3 ..> UC4 : includes
+UC4 ..> UC5 : includes
+
 Tourist --> UC4
 Tourist --> UC5
 
-Assistant --> UC1
-Assistant --> UC3
 Assistant --> UC6
 Assistant --> UC7
-
-UC1 ..> UC2 : includes
-UC3 ..> UC2 : includes
-UC3 ..> UC4 : includes
-UC5 ..> UC3 : includes
-UC6 ..> UC3 : includes
-UC7 ..> UC6 : includes
+Assistant --> UC2
 @enduml

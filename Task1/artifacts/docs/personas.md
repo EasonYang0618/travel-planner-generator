@@ -1,23 +1,19 @@
-Persona 1 — Alex (Budget Backpacker)
-- Role: Solo traveler in their 20s planning a 3–7 day city trip on a tight budget.
-- Goal: Maximise experiences each day while keeping costs low and schedule flexible.
-- Main concern: Hidden or vague costs and repetitive, generic activity suggestions.
-- Acceptance expectation: The app returns a clear day-by-day itinerary with distinct morning/afternoon/evening entries, numeric estimated costs adjusted for my budget, no repeated generic fallback activities, and an overall overview + tips.
+- Role: Solo leisure traveller (young professional)
+  - Goal: Quickly generate a personalised, easy-to-follow day-by-day plan for a short city trip.
+  - Main concern: Itineraries that repeat the same vague activities or show costs as non‑numeric labels.
+  - Acceptance expectation: Each day must present distinct morning/afternoon/evening human‑readable activities (no [object Object] text), numeric estimated costs, and no repeated generic fallback items.
 
-Persona 2 — Maria (Family Planner)
-- Role: Parent organizing a 4–6 day trip with two young children.
-- Goal: Create a child-friendly, varied daily plan that balances activity and downtime.
-- Main concern: Lack of clarity about pace and unsuitable activities for kids; confusing UI that shows raw objects or [object Object].
-- Acceptance expectation: Each day shows readable human-friendly activity titles/descriptions (not raw dictionaries), a budget_note, and the itinerary length matches the requested days so I can trust the schedule.
+- Role: Parent planning a family holiday
+  - Goal: Create a kid‑friendly, manageable multi‑day itinerary with varied themes each day.
+  - Main concern: Overcrowded or late schedules and unclear activity descriptions that aren’t suitable for children.
+  - Acceptance expectation: Every day includes day/morning/afternoon/evening and a budget_note, with varied, family‑appropriate activity titles and descriptions; the frontend must not generate its own image previews (image integration happens later).
 
-Persona 3 — Johan & Lina (Couple, Comfort Seeker)
-- Role: Couple wanting a romantic/comfortable itinerary with some curated dining and relaxation.
-- Goal: Enjoy themed days (food, relaxation, viewpoints) and upscale experiences without surprises.
-- Main concern: Unclear activity details, fuzzy cost indicators, and unexpected repetition across days.
-- Acceptance expectation: The itinerary provides themed days with expanded, concrete activities (e.g., multiple food options), numeric cost estimates reflecting the chosen budget level, and clear overview + tips so we can book with confidence.
+- Role: Budget backpacker
+  - Goal: Maximise experience on a tight budget by prioritising low‑cost local activities.
+  - Main concern: Ambiguous cost guidance and hidden expenses.
+  - Acceptance expectation: Estimated costs are numeric and scaled by budget level (so I can compare days); activity lists should rotate and expand interests so the trip doesn’t reuse the same three items.
 
-Persona 4 — Grace (Accessible Senior Traveler)
-- Role: Retiree who values accessibility, moderate pacing, and clear instructions.
-- Goal: Get a safe, easy-to-follow multi-day plan with accessible attractions and rest periods.
-- Main concern: Overly packed days, unclear descriptions, or UI that attempts its own image previews unexpectedly.
-- Acceptance expectation: A readable, day-by-day itinerary (morning/afternoon/evening + budget_note) with non-repetitive, concrete activities; the frontend must not create its own image preview area (image integration handled later).
+- Role: Travel agency operator (staff)
+  - Goal: Produce deterministic itineraries via the API/website to include in client proposals and reuse across clients.
+  - Main concern: Inconsistent API responses, missing top‑level fields, or UI rendering that breaks automated workflows.
+  - Acceptance expectation: POST /api/itinerary returns the required top‑level fields (destination, days, budget, interests, travel_style, overview, itinerary, tips), itinerary length equals days, activity texts are human‑readable, and the frontend exposes stable IDs/functions for integration while leaving image previewing to the image contract agent.

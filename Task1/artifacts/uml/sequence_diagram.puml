@@ -5,24 +5,25 @@ participant "Flask API" as API
 participant APIFree
 User -> Website: Submit preferences
 activate Website
-Website -> Website: validate input
+Website -> Website: Validate input
 alt valid
- Website -> API: POST /api/itinerary
- activate API
- API -> API: build schema
- API --> Website: Itinerary response
- deactivate API
- Website -> API: GET /api/image
- activate API
- API -> APIFree: GET /image
- activate APIFree
- APIFree --> API: Image data
- deactivate APIFree
- API --> Website: Image response
- Website -> Website: render readable fields
- Website --> User: Display itinerary and image
-else invalid
- Website --> User: Show error
-end
+Website -> API: POST /api/itinerary
+activate API
+API --> Website: Itinerary response
+deactivate API
+Website -> Website: Render activities
+Website -> API: GET /api/image
+activate API
+API -> APIFree: POST /generate-image
+activate APIFree
+APIFree --> API: Image data
+deactivate APIFree
+API --> Website: Image response
+deactivate API
+Website -> User: Display itinerary and image
 deactivate Website
+else invalid
+Website --> User: Show error 400
+deactivate Website
+end
 @enduml

@@ -10,6 +10,14 @@ The selected business problem is a travel planner website. Users enter a destina
 
 The website uses two AI-generated images. First, the notebook generates a default travel-planner website image and saves it into the generated website assets. This image is visible when the website first loads. Second, after the user submits a destination, the website calls the generated Flask API to create a destination-specific AI image based on the user's input.
 
+The generated website has also been deployed on Render:
+
+```text
+https://travel-planner-generator.onrender.com
+```
+
+The destination image is generated only after the user enters a destination and submits the form. On the Render deployment, this feature uses the APIFree API key configured in the Render environment variables.
+
 The notebook also uses a lightweight frontend image contract agent. This agent checks the AI-generated frontend for the default image, destination image area, and `/api/destination-image` call. If one part is missing, it adds only that frontend integration and records its actions in `Task1/artifacts/docs/frontend_image_contract_agent_report.md`.
 
 ## Structure
@@ -52,7 +60,7 @@ The coursework conda environment file is included at:
 Task1/ai_in_se_cw.yml
 ```
 
-An APIFree API key should be provided as `APIFREE_API_KEY` in the submitted `.env` file or as an environment variable. Internet access is required for APIFree generation and PlantUML rendering. The submitted APIFree key may have limited remaining credit; if APIFree generation fails because of insufficient balance, please replace it with another valid APIFree key.
+An APIFree API key should be provided as `APIFREE_API_KEY` in the submitted `.env` file or as an environment variable. Internet access is required for APIFree generation and PlantUML rendering. I used my own APIFree API key and added 10 USD credit so that the deployed Render website can be tested with the destination image generation feature. If the key later runs out of balance, please replace it with another valid APIFree key.
 
 The submitted `.env` file should use this format:
 
@@ -108,6 +116,16 @@ Then open:
 http://localhost:5000
 ```
 
+## Render Cloud Deployment
+
+The submitted website is deployed on Render at:
+
+```text
+https://travel-planner-generator.onrender.com
+```
+
+Render runs the generated Flask app from `Task1/artifacts/app`. The APIFree key is configured in Render environment variables, so the deployed website can call APIFree when the user submits a destination and requests a destination-specific AI image.
+
 ## Optional: Run Website Without Docker
 
 From `Task1/artifacts/app`:
@@ -138,4 +156,4 @@ Suggested screenshots for Task2:
 
 - Commit records: GitHub repository commit history.
 - CI/CD workflow: GitHub Actions page showing the `Travel Planner CI` workflow passing.
-- Website deployment: browser showing the running website at `http://localhost:5000`.
+- Website deployment: browser showing the Render deployment at `https://travel-planner-generator.onrender.com`.
